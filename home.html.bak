@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Navbar with Icons</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-6">
+<a href="Resume/JomarPadonan-Resume.pdf" download="JomarPadonan-Resume.pdf"
+-   class="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition text-center">
+-   Download CV
+-</a>
+-
+-
+-
+-
+-
+
+
+      <a href="#contact"
+-        class="px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition text-center">
+-        Contact Me
+-      </a>
+-    </div>
+-
+-
+-
+-  </div>
+-
+-
+-  <!-- Right: Profile Picture -->
+-  <div class="relative w-64 h-80 md:w-80 md:h-96 overflow-hidden">
+-    <div class="w-full h-full animate-oblongWave">
+-      <img src="../images/Me-removebg-preview.png" alt="Jomar Padonan"
+-           class="w-full h-full object-cover">
+-    </div>
+-  </div>
+-
+-</section>
+-
+-
+-
+-
+-  <!-- Script for mobile menu toggle -->
+-  <script>
+-    // Burger menu
+-  const burger = document.getElementById('burger');
+-  const mobileMenu = document.getElementById('mobileMenu');
+-  burger.addEventListener('click', () => {
+-    mobileMenu.classList.toggle('open');
+-  });
+-
+-  // Typing animation
+-  const texts = [
+-    "IT Aspiring dev",
+-    "IT Technical Support",
+-    "IT Remote Support",
+-    "IT Specialist"
+-  ];
+-
+-  let textIndex = 0;
+-  let charIndex = 0;
+-  const typingEl = document.querySelector(".typing");
+-
+-  function type() {
+-    if (charIndex < texts[textIndex].length) {
+-      typingEl.textContent += texts[textIndex].charAt(charIndex);
+-      charIndex++;
+-      setTimeout(type, 100);
+-    } else {
+-      setTimeout(erase, 2000);
+-    }
+-  }
+-
+-  function erase() {
+-    if (charIndex > 0) {
+-      typingEl.textContent = texts[textIndex].substring(0, charIndex - 1);
+-      charIndex--;
+-      setTimeout(erase, 60);
+-    } else {
+-      textIndex = (textIndex + 1) % texts.length;
+-      setTimeout(type, 500);
+-    }
+-  }
+-
+-  type();
+-  </script>
+-
+-
+-</body>
+-
+-</html>
+    <!-- Buttons -->      <a href="https://www.linkedin.com/in/jomar-padonan-7470a4366/" class="hover:text-blue-800"><i class="fab fa-linkedin"></i></a>
+    </div>
+    <div class="flex justify-start md:justify-start gap-6 text-2xl mt-6 text-gray-800">
+      <a href="https://www.facebook.com/jomspogi0825" class="hover:text-blue-600"><i class="fab fa-facebook"></i></a>
+  <a href="https://mail.google.com/mail/?view=cm&fs=1&to=jomspadonan15@gmail.com&su=Hello%20Jomar&body=Hi%20Jomar,%0A%0AI%20want%20to%20contact%20you." 
+-   target="_blank" class="hover:text-red-600 flex items-center gap-2">
+  <i class="fas fa-envelope text-2xl"></i>
+  <span class="hidden md:inline"></span>
+</a>
+    <!-- Social Icons -->
+    <h2 class="text-xl md:text-2xl text-blue-700 mt-4">
+      I am <span class="typing font-bold"></span>
+    </h2>
+    <h1 class="text-4xl md:text-5xl font-bold mt-2 
+-               bg-clip-text text-transparent animate-gradient">
+      Jomar Padonan
+    </h1>    
+    <p class="text-4xl md:text-7xl font-bold text-gray-900 mt-2">Hi I'm</p>  <div class="text-left max-w-xl md:flex-none md:mr-[10%]">
+-  <!-- Left: Text Content --><section id="home" class="flex flex-col md:flex-row items-center justify-center min-h-screen pt-10 px-4 md:px-20 gap-10 md:gap-16">  </nav>    </div>      </ul>        </li>          </a>            <span class="nav-text">Contact</span>            <i class="fas fa-envelope"></i>          <a href="#contact" class="block py-1 nav-link inline-flex items-center gap-1">        <li>        </li>          </a>            <span class="nav-text">Projects</span>            <i class="fas fa-folder-open"></i>          <a href="#projects" class="block py-1 nav-link inline-flex items-center gap-1">        <li>        </li>          </a>            <span class="nav-text">About</span>            <i class="fas fa-user"></i>          <a href="#about" class="block py-1 nav-link inline-flex items-center gap-1">        <li>        </li>          </a>            <span class="nav-text">Home</span>            <i class="fas fa-home"></i>          <a href="#home" class="block py-1 nav-link inline-flex items-center gap-1">        <li>      <ul class="space-y-1 text-gray-700 font-medium text-sm">    <div id="mobileMenu" class="slide-down md:hidden px-4 pb-1">
+    <!-- Mobile Menu -->
+    </div>      </div>        </button>          <i class="fas fa-bars text-xl"></i>        <button id="burger" class="text-gray-700 focus:outline-none">      <div class="md:hidden">      <!-- Burger button (mobile) -->      </ul>        </li>          </a>            <span class="nav-text">Contact</span>            <i class="fas fa-envelope"></i>          <a href="#contact" class="nav-link inline-flex items-center gap-1">        <li>        </li>          </a>            <span class="nav-text">Projects</span>            <i class="fas fa-folder-open"></i>          <a href="#projects" class="nav-link inline-flex items-center gap-1">        <li>        </li>          </a>            <span class="nav-text">About</span>            <i class="fas fa-user"></i>          <a href="#about" class="nav-link inline-flex items-center gap-1">        <li>        </li>          </a>            <span class="nav-text">Home</span>            <i class="fas fa-home"></i>          <a href="#home" class="nav-link inline-flex items-center gap-1">        <li>      <ul class="hidden md:flex space-x-6 text-gray-700 font-medium">
+      <!-- Desktop Menu -->      <div class="text-2xl font-bold text-blue-600">MyPortfolio</div>      <!-- Logo -->          <div class="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">  <nav class="fixed w-full shadow-md z-10">  <!-- Navbar --><body></head>  </style>}  transition: border-radius 0.3s ease-in-out;  animation: oblongWave 6s ease-in-out infinite;  overflow: hidden;  height: 100%;  width: 100%;.animate-oblongWave {}  }    border-radius: 40% 60% 45% 55% / 50% 40% 60% 50%;  100% {  }    border-radius: 41% 59% 46% 54% / 50% 40% 60% 50%;  75% {  }    border-radius: 38% 62% 44% 56% / 48% 42% 58% 52%;  50% {  }    border-radius: 42% 58% 47% 53% / 52% 38% 62% 48%;  25% {  }    border-radius: 40% 60% 45% 55% / 50% 40% 60% 50%;  0% {@keyframes oblongWave {  /* Animate oblong shape edges */}  animation: gradientMove 6s ease infinite;  background-size: 600% 600%;  background: linear-gradient(270deg, #3b82f6, #ec4899, #8b5cf6, #3b82f6);.animate-gradient {}  }    background-position: 0% 50%;  100% {  }    background-position: 100% 50%;  50% {  }    background-position: 0% 50%;  0% {@keyframes gradientMove {    }      width: 100%;    .nav-link:hover .nav-text::after {    }      transition: width 0.3s ease-in-out;      background-color: #2563eb; /* Tailwind blue-600 */      left: 0;      bottom: -2px;      height: 2px;      width: 0%;      position: absolute;      content: '';    .nav-text::after {    }      display: inline-block;      position: relative;    .nav-text {    /* Hover underline only under text */    }      max-height: 500px; /* enough to fit menu */    .slide-down.open {    }      transition: max-height 0.3s ease-out;      overflow: hidden;      max-height: 0;    .slide-down {    /* Mobile slide-down menu */    }      font-family: Arial, sans-serif;      background-color: #d2d1e9; /* Top color of gradient */    nav {    }      font-family: Arial, sans-serif;      margin: 0;      min-height: 100vh;      background: linear-gradient(to bottom, #d2d1e9, #667aeb);    body {    /* Body and Nav Gradient */  <style>3

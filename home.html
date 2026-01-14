@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Navbar with Icons</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Jomar Padonan — Portfolio</title>
+      <meta name="description" content="Jomar Padonan — IT aspiring developer and technical support specialist." />
+
+      <!-- Tailwind CSS -->
+      <script src="https://cdn.tailwindcss.com"></script>
+      <!-- PDF.js and Tesseract for client-side OCR import -->
+      <script src="https://unpkg.com/pdfjs-dist@3.7.107/build/pdf.min.js"></script>
+      <script src="https://unpkg.com/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+      <!-- Font Awesome -->
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+      <style>
+        /* Typography + base colors */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        :root { --accent: #0ea5e9; --muted: #64748b; --card: #ffffff; --glass: rgba(255,255,255,0.6); }
+        html,body{height:100%}
+        body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#f8fafc 0%, #eef2ff 100%); margin:0; color:#0f172a}
+
+        /* Container override for consistent width */
+        .container{max-width:1200px}
+
+        /* Navbar — subtle glass + shadow */
+        nav{backdrop-filter: blur(6px); background: rgba(255,255,255,0.6); box-shadow: 0 8px 30px rgba(2,6,23,0.06)}
+
+        /* Hero gradient text */
+        .gradient-text{background:linear-gradient(90deg,var(--accent),#8b5cf6); -webkit-background-clip:text;background-clip:text;color:transparent}
+
+        /* Blob background */
+        .blob{position:absolute;right:-6rem;top:-6rem;width:36rem;height:36rem;background:radial-gradient(circle at 30% 30%, rgba(99,102,241,0.14), transparent 25%), linear-gradient(135deg,#a78bfa22,#60a5fa11);filter:blur(40px);transform:rotate(12deg);z-index:0}
+
+        /* Reveal animations (smoother) */
+        .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.8,.2,1), transform .6s cubic-bezier(.2,.8,.2,1)}
+        .reveal.active{opacity:1;transform:none}
+
+        /* Tech badges */
+        .tech{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem .6rem;border-radius:999px;background:var(--glass);box-shadow:0 8px 30px rgba(2,6,23,.06);font-weight:600}
+
+        /* Project card */
+        .project-card{transition:transform .28s ease,box-shadow .28s ease,filter .28s ease;border-radius:12px;overflow:hidden}
+        .project-card:hover{transform:translateY(-8px) scale(1.01);box-shadow:0 22px 50px rgba(2,6,23,.12);filter:brightness(1.02)}
+
+        /* Project overlay */
+        .proj-figure{position:relative;overflow:hidden}
+        .proj-figure img{display:block; width:100%; height:260px; object-fit:cover; transition:transform .6s ease}
+        .project-card:hover .proj-figure img{transform:scale(1.06)}
+        .proj-overlay{position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.0) 30%, rgba(2,6,23,0.45));display:flex;align-items:end;padding:1rem;opacity:0;transition:opacity .28s ease}
+        .project-card:hover .proj-overlay{opacity:1}
+        .proj-tags{display:flex;gap:.5rem;flex-wrap:wrap}
+        .proj-cta{display:flex;gap:.5rem}
+
+        /* Responsive tweaks */
+        @media (max-width:768px){ .blob{display:none} }
+
+        /* Floating/profile animation */
+        .profile-img{transition:transform .4s ease,box-shadow .4s ease; animation:floatY 6s ease-in-out infinite}
+        @keyframes floatY{ 0%{transform:translateY(0)}50%{transform:translateY(-10px)}100%{transform:translateY(0)} }
+
+        /* Tech badge bobbing (staggered via nth-child) */
+        .tech{animation:bob 3.6s ease-in-out infinite;}
+        .tech:nth-child(1){animation-delay:0s}
+        .tech:nth-child(2){animation-delay:.2s}
+        .tech:nth-child(3){animation-delay:.4s}
+        .tech:nth-child(4){animation-delay:.6s}
+        .tech:nth-child(5){animation-delay:.8s}
+        @keyframes bob{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)} }
+
+        /* Project tilt effect placeholder (JS will apply transform) */
+        .project-card{transform-style:preserve-3d}
+
+        /* Buttons */
+        .btn-ghost{transition:transform .18s ease, box-shadow .18s ease}
+        .btn-ghost:active{transform:scale(.98)}
+        a.button-primary{background:linear-gradient(90deg,var(--accent),#6366f1); color:white; padding:.65rem 1rem; border-radius:12px; display:inline-block; box-shadow:0 12px 30px rgba(99,102,241,.12); font-weight:700}
+
+        /* Global animated gradient background for hero */
+        .hero-gradient { background: linear-gradient(270deg,#f8fafc,#eef2ff,#fce7f3); background-size: 600% 600%; animation: bgShift 12s ease infinite; }
+        @keyframes bgShift { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
+
+        /* Heading underline sweep */
+        .heading-underline { position: relative; display: inline-block; }
+        .heading-underline::after { content:''; position:absolute; left:0; bottom:-6px; height:3px; width:0; background:linear-gradient(90deg,#60a5fa,#8b5cf6); border-radius:3px; transition:width .45s cubic-bezier(.2,.8,.2,1); }
+        .heading-underline.revealed::after { width:100%; }
+
+        /* Animated section divider lines */
+        .section-divider { height:4px; overflow:hidden; margin:2.5rem 0; }
+        .section-divider .line { height:4px; width:100%; transform:translateX(-100%); background:linear-gradient(90deg,#06b6d4,#8b5cf6,#f472b6); animation: slideLine 1.2s cubic-bezier(.2,.8,.2,1) forwards; }
+        @keyframes slideLine { to { transform: translateX(0%); } }
+
+        /* Scroll progress */
+        #scrollProgress{position:fixed;left:0;top:0;height:4px;background:linear-gradient(90deg,#06b6d4,#6366f1);width:0;z-index:60;transition:width .1s linear}
+
+        /* Mobile menu smooth expand */
+        .slide-down{transition:max-height .32s cubic-bezier(.2,.8,.2,1); overflow:hidden}
+
+        /* Back to top */
+        #toTop{position:fixed;right:16px;bottom:18px;background:linear-gradient(90deg,#06b6d4,#6366f1);color:white;border:none;padding:10px;border-radius:999px;box-shadow:0 12px 30px rgba(2,6,23,.12);display:none;z-index:60}
+        /* Skill bars */
+        .skill { display:block; margin-bottom:1rem }
+        .skill .label { display:flex; justify-content:space-between; font-size:.9rem; color:var(--muted); margin-bottom:.35rem }
+        .skill-track { height:10px; background:rgba(2,6,23,.06); border-radius:999px; overflow:hidden }
+        .skill-progress { height:100%; width:0; background:linear-gradient(90deg,#06b6d4,#8b5cf6); border-radius:999px; transition:width 900ms cubic-bezier(.2,.8,.2,1) }
+        /* Editor controls hidden by default; shown with keyboard shortcut */
+        .editor-hidden{display:none !important}
+        /* Experience timeline styling */
+        #experienceList{position:relative}
+        /* move timeline and ensure markers sit outside cards (in the margin) */
+        #experienceList::before{content:'';position:absolute;left:36px;top:16px;bottom:16px;width:2px;background:linear-gradient(180deg,#e2e8f0, #c7d2fe);border-radius:2px;z-index:0}
+        /* remove blue marker near company titles */
+        .exp-item{position:relative;margin-left:0;padding-left:1.25rem;z-index:1}
+        .exp-item::before, .exp-item::after { display: none !important; }
+        .exp-item .text-slate-500{color:var(--muted)!important}
+        .exp-item h3{font-size:1.05rem}
+        .exp-item:hover{transform:translateY(-4px);transition:transform .18s ease;box-shadow:0 18px 40px rgba(2,6,23,.06)}
+        .exp-item ul li{list-style:none;position:relative;padding-left:1.6rem;margin-bottom:.45rem}
+        .exp-item ul li::before{content:'';position:absolute;left:0;top:.4rem;width:8px;height:8px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);border-radius:50%;box-shadow:0 6px 14px rgba(6,182,212,.06)}
+        .exp-date-badge{display:inline-block;background:linear-gradient(90deg,#f1f5f9,#eef2ff);color:var(--muted);padding:.25rem .5rem;border-radius:999px;font-size:.8rem}
+
+        /* About card enhancements */
+        .about-card{display:flex;gap:1rem;align-items:flex-start;padding:1rem;border-radius:.6rem;background:linear-gradient(180deg,rgba(255,255,255,0.9),#ffffff);box-shadow:0 10px 30px rgba(2,6,23,.04)}
+        .about-card .icon{width:44px;height:44px;border-radius:10px;display:inline-grid;place-items:center;color:white;flex-shrink:0}
+        .icon-it{background:linear-gradient(90deg,#06b6d4,#3b82f6)}
+        .icon-fe{background:linear-gradient(90deg,#f97316,#f43f5e)}
+        .icon-auto{background:linear-gradient(90deg,#34d399,#06b6d4)}
+        .about-card h4{margin:0}
+        /* small helper to nudge right-column cards down so they align with left column headings */
+        .col-offset{margin-top:1.1rem}
+        /* Profile image wrapper + animated snake border */
+        .profile-wrap{position:relative;display:inline-block}
+        .profile-wrap img{display:block;border-radius:inherit}
+        .snake-svg{position:absolute;inset:-12px;width:calc(100% + 24px);height:calc(100% + 24px);pointer-events:none;z-index:2}
+        .snake-path{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke:url(#snakeGrad);stroke-dasharray:6 6 4 6;animation:dashAnim 3s linear infinite}
+        .snake-rot{transform-origin:center center;animation:spinAnim 10s linear infinite alternate}
+
+        @keyframes dashAnim{to{stroke-dashoffset:-240}}
+        @keyframes spinAnim{from{transform:rotate(0deg)} to{transform:rotate(360deg)}}
+      </style>
+    </head>
+
+    <body class="text-slate-800">
+      <div id="scrollProgress"></div>
+      <nav class="fixed w-full z-40">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+          <a href="#home" class="text-xl font-bold text-sky-600">JomarPadonan</a>
+          <div class="hidden md:flex items-center gap-6 text-sm text-slate-700">
+            <a href="#home" class="hover:underline">Home</a>
+            <a href="#about" class="hover:underline">About</a>
+            <a href="#projects" class="hover:underline">Projects</a>
+            <a href="#contact" class="hover:underline">Contact</a>
+            <!-- navbar Resume removed -->
+          </div>
+          <button id="burger" class="md:hidden text-slate-700"><i class="fas fa-bars fa-lg"></i></button>
+        </div>
+        <div id="mobileMenu" class="slide-down md:hidden px-4">
+          <ul class="space-y-2 text-slate-700">
+            <li><a href="#home" class="block py-2">Home</a></li>
+            <li><a href="#about" class="block py-2">About</a></li>
+            <li><a href="#projects" class="block py-2">Projects</a></li>
+            <li><a href="#contact" class="block py-2">Contact</a></li>
+            <!-- mobile Resume removed -->
+          </ul>
+        </div>
+      </nav>
+
+      <!-- HERO -->
+      <header id="home" class="pt-24 pb-12 relative overflow-hidden">
+        <div class="blob" aria-hidden="true"></div>
+        <div class="container mx-auto px-4">
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            <div class="md:pr-6 z-10">
+              <p class="text-slate-500">Hello, I'm</p>
+              <h1 class="text-4xl md:text-6xl font-extrabold mt-2">Jomar <span class="gradient-text">Padonan</span></h1>
+              <p class="mt-4 text-lg text-sky-700">Frontend & IT Support — creating clean, user-centered interfaces and solving IT problems.</p>
+
+              <div class="flex flex-wrap items-center gap-4 mt-6">
+                <a href="#projects" class="px-5 py-3 bg-sky-600 text-white rounded-lg shadow hover:bg-sky-700">View My Work</a>
+                <a href="#contact" class="px-5 py-3 border border-sky-600 text-sky-600 rounded-lg">Contact Me</a>
+                <a href="Resume/JomarPadonan-Resume.pdf" download class="px-5 py-3 bg-gradient-to-r from-sky-500 to-indigo-600 text-white rounded-lg shadow-lg hover:from-sky-600 hover:to-indigo-700 flex items-center gap-2">
+                  <i class="fas fa-download"></i>
+                  <span>Download Resume</span>
+                </a>
+              </div>
+
+              <div class="mt-8 flex flex-wrap gap-3">
+                <span class="tech"><i class="fab fa-html5 text-orange-500"></i> HTML</span>
+                <span class="tech"><i class="fab fa-css3-alt text-sky-600"></i> CSS</span>
+                <span class="tech"><i class="fab fa-js-square text-yellow-500"></i> JavaScript</span>
+                <span class="tech"><i class="fab fa-microsoft text-indigo-600"></i> .NET</span>
+                <span class="tech"><i class="fab fa-windows text-sky-600"></i> Windows</span>
+                <span class="tech"><i class="fas fa-network-wired text-indigo-500"></i> Network Troubleshoot</span>
+              </div>
+            </div>
+
+            <div class="relative z-10 flex justify-center md:justify-end">
+              <div class="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden profile-img shadow-lg profile-wrap">
+                <img src="../images/Me-removebg-preview.png" alt="Jomar" class="w-full h-full object-cover">
+                <!-- SVG snake border overlay -->
+                <svg class="snake-svg snake-rot" viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="snakeGrad" x1="0%" x2="100%">
+                      <stop offset="0%" stop-color="#06b6d4" />
+                      <stop offset="100%" stop-color="#6366f1" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="6" y="6" rx="20" ry="20" width="188" height="188" class="snake-path" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ABOUT / SERVICES -->
+      <section id="about" class="py-12">
+        <div class="container mx-auto px-4">
+          <!-- Animated divider -->
+          <div class="section-divider"><div class="line"></div></div>
+
+          <!-- Quick stats -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 reveal">
+            <div class="p-4 bg-white rounded-lg text-center">
+              <div class="text-3xl font-bold" data-target="6">0</div>
+              <div class="text-sm text-slate-600">Years Experience</div>
+            </div>
+            <div class="p-4 bg-white rounded-lg text-center">
+              <div class="text-3xl font-bold" data-target="50">0</div>
+              <div class="text-sm text-slate-600">Projects (est.)</div>
+            </div>
+            <div class="p-4 bg-white rounded-lg text-center">
+              <div class="text-3xl font-bold" data-target="100">0</div>
+              <div class="text-sm text-slate-600">Tickets Resolved</div>
+            </div>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-6 items-start">
+            <div class="md:col-span-2 reveal">
+              <h2 class="text-3xl font-bold mb-4">About Me</h2>
+              <p class="text-slate-700">Hi — I'm Jomar. I combine IT support experience with frontend development to build practical, accessible web experiences. I enjoy problem solving, automation, and crafting clean interfaces.</p>
+              <div class="mt-6 grid sm:grid-cols-3 gap-4">
+                <div class="about-card">
+                  <div class="icon icon-it"><i class="fas fa-tools"></i></div>
+                  <div>
+                    <h4 class="font-semibold">IT Support & Troubleshooting</h4>
+                    <p class="mt-2 text-slate-600 text-sm">Diagnose and resolve hardware, network, and software issues quickly. Skilled with Windows imaging, printer/POS support, ticketing systems, and onsite troubleshooting.</p>
+                  </div>
+                </div>
+
+                <div class="about-card">
+                  <div class="icon icon-fe"><i class="fas fa-laptop-code"></i></div>
+                  <div>
+                    <h4 class="font-semibold">Frontend Development</h4>
+                    <p class="mt-2 text-slate-600 text-sm">Create responsive, accessible interfaces using HTML, Tailwind CSS and JavaScript. Focused on clarity, usability and lightweight performance.</p>
+                  </div>
+                </div>
+
+                <div class="about-card">
+                  <div class="icon icon-auto"><i class="fas fa-robot"></i></div>
+                  <div>
+                    <h4 class="font-semibold">Automation & Systems</h4>
+                    <p class="mt-2 text-slate-600 text-sm">Automate repetitive tasks, manage backups and imaging, and improve reliability with practical scripting and tooling.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="bg-white rounded-lg shadow p-6 reveal self-start col-offset">
+                <h4 class="font-semibold mb-3">Contact</h4>
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-envelope fa-lg text-sky-600"></i>
+                  <div>
+                    <div class="text-sm font-medium">jomspadonan15@gmail.com</div>
+                    <div class="text-xs text-slate-500">Click to email or copy address</div>
+                  </div>
+                </div>
+                <div class="mt-3 flex gap-2">
+                  <button id="mailtoBtn" class="px-3 py-2 rounded bg-gradient-to-r from-sky-500 to-indigo-500 text-white text-sm"><i class="fas fa-paper-plane mr-2"></i>Email</button>
+                  <button id="copyEmailBtn" class="px-3 py-2 rounded border text-sm"><i class="fas fa-copy mr-2"></i>Copy</button>
+                </div>
+                <p class="text-sm text-slate-600 mt-4"><i class="fas fa-map-marker-alt mr-2 text-sky-600"></i> Philippines — Open to remote work</p>
+                <div class="mt-4 flex gap-3">
+                  <a href="https://www.linkedin.com/in/jomar-padonan-7470a4366/" class="text-slate-700 hover:text-sky-600"><i class="fab fa-linkedin fa-lg"></i></a>
+                  <a href="https://www.facebook.com/jomspogi0825" class="text-slate-700 hover:text-sky-600"><i class="fab fa-facebook fa-lg"></i></a>
+                </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESUME / EXPERIENCE -->
+      <section id="resume" class="py-12">
+        <div class="container mx-auto px-4">
+          <h2 class="text-3xl font-bold mb-4 reveal">Experience & Education</h2>
+
+          <div class="grid md:grid-cols-3 gap-6">
+            <div class="md:col-span-2">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Work Experience</h3>
+                <div class="flex items-center gap-2">
+                  <button id="addExpBtn" class="text-sm px-3 py-1 bg-white border rounded shadow hover:shadow-md"><i class="fas fa-plus mr-2 text-sky-600"></i>Add Experience</button>
+                </div>
+              </div>
+
+              <div id="experienceList" class="space-y-6">
+                <article class="bg-white rounded-lg p-5 shadow reveal exp-item">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h3 class="font-semibold">Mumuso — POS IT Support</h3>
+                      <p class="text-sm text-slate-500">Oct 27, 2022 - Present</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button class="edit-exp text-slate-500 hover:text-sky-600" title="Edit"><i class="fas fa-pen"></i></button>
+                      <button class="del-exp text-slate-500 hover:text-red-600" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                  </div>
+                  <ul class="mt-3 text-slate-600 list-disc list-inside">
+                    <li>Troubleshooted printers, networks, and computers.</li>
+                    <li>Conducted system and OS backups and restores.</li>
+                    <li>Maintained and repaired POS printers.</li>
+                    <li>Provided support for POS systems.</li>
+                    <li>Setup store branches with necessary IT infrastructure.</li>
+                  </ul>
+                </article>
+
+                <article class="bg-white rounded-lg p-5 shadow reveal exp-item">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h3 class="font-semibold">Medexpress — Local IT Support</h3>
+                      <p class="text-sm text-slate-500">Jan 25, 2021 - June 25, 2022</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button class="edit-exp text-slate-500 hover:text-sky-600" title="Edit"><i class="fas fa-pen"></i></button>
+                      <button class="del-exp text-slate-500 hover:text-red-600" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                  </div>
+                  <ul class="mt-3 text-slate-600 list-disc list-inside">
+                    <li>Created Domain accounts and managed folder shares for domain users.</li>
+                    <li>Managed firewall and internet connections.</li>
+                    <li>Utilized ticketing tools to track and resolve IT issues.</li>
+                    <li>Troubleshot computer and printer problems.</li>
+                    <li>Set up computers, software, and networks for branch offices.</li>
+                    <li>Uploaded data to SAP 760.</li>
+                    <li>Provided troubleshooting support for MS Office applications, including Outlook email configuration.</li>
+                  </ul>
+                </article>
+
+                <article class="bg-white rounded-lg p-5 shadow reveal exp-item">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h3 class="font-semibold">VST-ECS — Lenovo Field Engineer</h3>
+                      <p class="text-sm text-slate-500">Oct 10, 2020 - Jan 20, 2021</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button class="edit-exp text-slate-500 hover:text-sky-600" title="Edit"><i class="fas fa-pen"></i></button>
+                      <button class="del-exp text-slate-500 hover:text-red-600" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                  </div>
+                  <ul class="mt-3 text-slate-600 list-disc list-inside">
+                    <li>Installed and repaired computers, including installing server parts and cloning PCs.</li>
+                  </ul>
+                </article>
+
+                <article class="bg-white rounded-lg p-5 shadow reveal exp-item">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <h3 class="font-semibold">MSI-ECS — Service Technician</h3>
+                      <p class="text-sm text-slate-500">May 2, 2018 - Sep 5, 2018</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button class="edit-exp text-slate-500 hover:text-sky-600" title="Edit"><i class="fas fa-pen"></i></button>
+                      <button class="del-exp text-slate-500 hover:text-red-600" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                  </div>
+                  <ul class="mt-3 text-slate-600 list-disc list-inside">
+                    <li>Installed and repaired computers, including installing server parts and cloning PCs.</li>
+                  </ul>
+                </article>
+              </div>
+            </div>
+
+            <aside class="bg-white rounded-lg shadow p-6 reveal col-offset">
+              <h4 class="font-semibold mb-3">Education</h4>
+              <p class="text-sm text-slate-700">B.S. Information Technology — Example University (2019)</p>
+
+              <div class="mt-6">
+                <h4 class="font-semibold mb-3">Skills</h4>
+
+                <div id="skillsContainer">
+                  <div class="skill">
+                    <div class="label"><span>HTML & CSS</span><span><span class="skill-val">90%</span> <button class="edit-skill text-slate-500 ml-2" title="Edit"><i class="fas fa-pen"></i></button></span></div>
+                    <div class="skill-track"><div class="skill-progress" data-percent="90" aria-valuenow="0"></div></div>
+                  </div>
+
+                  <div class="skill">
+                    <div class="label"><span>JavaScript</span><span><span class="skill-val">80%</span> <button class="edit-skill text-slate-500 ml-2" title="Edit"><i class="fas fa-pen"></i></button></span></div>
+                    <div class="skill-track"><div class="skill-progress" data-percent="80" aria-valuenow="0"></div></div>
+                  </div>
+
+                  <div class="skill">
+                    <div class="label"><span>React / Frontend</span><span><span class="skill-val">75%</span> <button class="edit-skill text-slate-500 ml-2" title="Edit"><i class="fas fa-pen"></i></button></span></div>
+                    <div class="skill-track"><div class="skill-progress" data-percent="75" aria-valuenow="0"></div></div>
+                  </div>
+
+                  <div class="skill">
+                    <div class="label"><span>IT Support & Troubleshooting</span><span><span class="skill-val">85%</span> <button class="edit-skill text-slate-500 ml-2" title="Edit"><i class="fas fa-pen"></i></button></span></div>
+                    <div class="skill-track"><div class="skill-progress" data-percent="85" aria-valuenow="0"></div></div>
+                  </div>
+                </div>
+                <div class="mt-3"><button id="addSkillBtn" class="text-sm px-3 py-1 bg-white border rounded shadow hover:shadow-md"><i class="fas fa-plus mr-2 text-sky-600"></i>Add Skill</button></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROJECTS -->
+      <section id="projects" class="py-12 bg-slate-50">
+        <div class="container mx-auto px-4">
+          <h2 class="text-3xl font-bold mb-6 reveal">Featured Projects</h2>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <article class="project-card bg-white rounded-lg overflow-hidden reveal">
+              <div class="proj-figure">
+                <img src="../images/Me-removebg-preview.png" alt="project">
+                <div class="proj-overlay">
+                  <div class="w-full">
+                    <div class="proj-tags mb-2"><span class="tech px-2 py-1 text-xs">HTML</span><span class="tech px-2 py-1 text-xs">Tailwind</span></div>
+                    <div class="flex items-center justify-between">
+                      <div class="text-white">
+                        <h3 class="font-semibold">Portfolio Website</h3>
+                        <p class="text-xs opacity-90">Responsive personal portfolio built with HTML, Tailwind and JS.</p>
+                      </div>
+                      <div class="proj-cta">
+                        <a href="#" class="px-3 py-1 rounded bg-white bg-opacity-10 border border-white/20 text-white text-sm">View</a>
+                        <a href="#" class="px-3 py-1 rounded bg-white text-slate-800 text-sm">Code</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="project-card bg-white rounded-lg overflow-hidden reveal">
+              <div class="proj-figure">
+                <img src="../images/Me-removebg-preview.png" alt="project">
+                <div class="proj-overlay">
+                  <div class="w-full">
+                    <div class="proj-tags mb-2"><span class="tech px-2 py-1 text-xs">Dashboard</span><span class="tech px-2 py-1 text-xs">JS</span></div>
+                    <div class="flex items-center justify-between">
+                      <div class="text-white">
+                        <h3 class="font-semibold">Support Dashboard (demo)</h3>
+                        <p class="text-xs opacity-90">Ticket and notes demo for support workflows.</p>
+                      </div>
+                      <div class="proj-cta">
+                        <a href="#" class="px-3 py-1 rounded bg-white bg-opacity-10 border border-white/20 text-white text-sm">View</a>
+                        <a href="#" class="px-3 py-1 rounded bg-white text-slate-800 text-sm">Code</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="project-card bg-white rounded-lg overflow-hidden reveal">
+              <div class="proj-figure">
+                <img src="../images/Me-removebg-preview.png" alt="project">
+                <div class="proj-overlay">
+                  <div class="w-full">
+                    <div class="proj-tags mb-2"><span class="tech px-2 py-1 text-xs">Automation</span><span class="tech px-2 py-1 text-xs">Python</span></div>
+                    <div class="flex items-center justify-between">
+                      <div class="text-white">
+                        <h3 class="font-semibold">Automation Scripts</h3>
+                        <p class="text-xs opacity-90">Small scripts that speed up recurring IT tasks.</p>
+                      </div>
+                      <div class="proj-cta">
+                        <a href="#" class="px-3 py-1 rounded bg-white bg-opacity-10 border border-white/20 text-white text-sm">View</a>
+                        <a href="#" class="px-3 py-1 rounded bg-white text-slate-800 text-sm">Code</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="contact" class="py-12">
+        <div class="container mx-auto px-4 max-w-2xl">
+          <h2 class="text-3xl font-bold mb-4 reveal">Contact Me</h2>
+          <p class="text-slate-600 mb-6 reveal">Have a project or need support? Send a message and I will get back to you.</p>
+
+          <form id="contactForm" class="bg-white rounded-lg shadow p-6 reveal">
+            <label class="block mb-3"><span class="text-sm">Name</span><input name="name" required class="mt-1 block w-full rounded border-gray-200 p-2" /></label>
+            <label class="block mb-3"><span class="text-sm">Email</span><input name="email" type="email" required class="mt-1 block w-full rounded border-gray-200 p-2" /></label>
+            <label class="block mb-3"><span class="text-sm">Message</span><textarea name="message" rows="5" required class="mt-1 block w-full rounded border-gray-200 p-2"></textarea></label>
+            <div class="flex items-center gap-4">
+              <button type="submit" class="px-5 py-2 bg-sky-600 text-white rounded">Send Message</button>
+              <span id="formStatus" class="text-sm text-green-600 hidden">Preparing email...</span>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <footer class="py-6 text-center text-sm text-slate-600">
+        © <span id="year"></span> Jomar Padonan — Built with HTML & Tailwind
+      </footer>
+
+      <button id="toTop" aria-label="Back to top">↑</button>
+
+      <!-- passcode modal removed; editor controls are hidden by default and toggled with Ctrl+Alt+J -->
+
+      <!-- Modals: Experience editor + Skill editor -->
+      <div id="expModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="bg-white rounded-lg shadow-lg z-50 w-full max-w-2xl p-6 mx-4">
+          <h3 id="expModalTitle" class="text-lg font-semibold mb-3">Add Experience</h3>
+          <label class="block mb-2 text-sm">Position & Company
+            <input id="expTitle" class="mt-1 block w-full rounded border-gray-200 p-2" />
+          </label>
+          <label class="block mb-2 text-sm">Dates
+            <input id="expDates" class="mt-1 block w-full rounded border-gray-200 p-2" />
+          </label>
+          <label class="block mb-2 text-sm">Bullet points (one per line)
+            <textarea id="expBullets" rows="6" class="mt-1 block w-full rounded border-gray-200 p-2" placeholder="- Example responsibility\n- Another responsibility"></textarea>
+          </label>
+          <div class="flex justify-end gap-3 mt-4">
+            <button id="expCancel" class="px-4 py-2 rounded border">Cancel</button>
+            <button id="expSave" class="px-4 py-2 rounded bg-sky-600 text-white">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="skillModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="bg-white rounded-lg shadow-lg z-50 w-full max-w-md p-6 mx-4">
+          <h3 id="skillModalTitle" class="text-lg font-semibold mb-3">Edit Skill</h3>
+          <label class="block mb-2 text-sm">Skill Name
+            <input id="skillName" class="mt-1 block w-full rounded border-gray-200 p-2" />
+          </label>
+          <label class="block mb-2 text-sm">Percent
+            <input id="skillPercent" type="number" min="0" max="100" class="mt-1 block w-full rounded border-gray-200 p-2" />
+          </label>
+          <div class="flex justify-end gap-3 mt-4">
+            <button id="skillCancel" class="px-4 py-2 rounded border">Cancel</button>
+            <button id="skillSave" class="px-4 py-2 rounded bg-sky-600 text-white">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Mobile menu toggle (use maxHeight so it works even without slide-down CSS)
+        const burger = document.getElementById('burger');
+        const mobileMenu = document.getElementById('mobileMenu');
+        if (mobileMenu) {
+          mobileMenu.style.overflow = 'hidden';
+          mobileMenu.style.maxHeight = '0';
+        }
+        if (burger) {
+          const openIcon = '<i class="fas fa-bars fa-lg"></i>';
+          const closeIcon = '<i class="fas fa-times fa-lg"></i>';
+          burger.innerHTML = openIcon;
+          burger.addEventListener('click', () => {
+            if (!mobileMenu) return;
+            const isOpen = mobileMenu.style.maxHeight && mobileMenu.style.maxHeight !== '0px';
+            if (isOpen) {
+              mobileMenu.style.maxHeight = '0';
+              burger.innerHTML = openIcon;
+              mobileMenu.setAttribute('aria-hidden', 'true');
+            } else {
+              mobileMenu.style.maxHeight = mobileMenu.scrollHeight + 'px';
+              burger.innerHTML = closeIcon;
+              mobileMenu.setAttribute('aria-hidden', 'false');
+            }
+          });
+          window.addEventListener('resize', ()=>{
+            if (window.innerWidth >= 768) {
+              mobileMenu.style.maxHeight = null;
+              burger.innerHTML = openIcon;
+              mobileMenu.setAttribute('aria-hidden', 'false');
+            } else {
+              mobileMenu.style.maxHeight = '0';
+              mobileMenu.setAttribute('aria-hidden', 'true');
+            }
+          });
+        }
+
+        // Smooth scroll anchor behavior
+        document.querySelectorAll('a[href^="#"]').forEach(a=>{ a.addEventListener('click', e=>{ const href=a.getAttribute('href'); if(href.length>1 && document.querySelector(href)){ e.preventDefault(); document.querySelector(href).scrollIntoView({behavior:'smooth',block:'start'}); if(mobileMenu) mobileMenu.style.maxHeight = '0'; } }); });
+
+        // Contact form -> mailto
+        const form = document.getElementById('contactForm');
+        const statusEl = document.getElementById('formStatus');
+        if(form){ form.addEventListener('submit', e=>{ e.preventDefault(); const data = new FormData(form); const name = data.get('name'); const email = data.get('email'); const message = data.get('message'); const subject = encodeURIComponent('Portfolio contact from '+name); const body = encodeURIComponent('Name: '+name+'\nEmail: '+email+'\n\n'+message); window.location.href = `mailto:jomspadonan15@gmail.com?subject=${subject}&body=${body}`; if(statusEl){ statusEl.classList.remove('hidden'); setTimeout(()=>statusEl.classList.add('hidden'),3000);} form.reset(); }); }
+
+        // Reveal on scroll with stagger and delay data support
+        const reveals = Array.from(document.querySelectorAll('.reveal'));
+        function revealElement(el, delay=0){ setTimeout(()=> el.classList.add('active'), delay); }
+        if('IntersectionObserver' in window){
+          const io = new IntersectionObserver((entries)=>{
+            entries.forEach(entry=>{
+              if(entry.isIntersecting){
+                const idx = reveals.indexOf(entry.target);
+                const delay = (idx>=0? idx * 120 : 0);
+                revealElement(entry.target, delay);
+                io.unobserve(entry.target);
+              }
+            });
+          }, {threshold:0.12});
+          reveals.forEach(r=> io.observe(r));
+        } else {
+          reveals.forEach((r,i)=> revealElement(r, i*120));
+        }
+
+        // Subtle tech badge animation: add small rotate on hover
+        document.querySelectorAll('.tech').forEach(t=>{ t.addEventListener('mouseover', ()=> t.style.transform='translateY(-6px) rotate(-2deg)'); t.addEventListener('mouseout', ()=> t.style.transform='none'); });
+
+        // Project card tilt on mouse move
+        document.querySelectorAll('.project-card').forEach(card=>{
+          card.addEventListener('mousemove', e=>{
+            const rect = card.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width - 0.5; // -0.5..0.5
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            const rotX = (y * 8).toFixed(2);
+            const rotY = (x * -8).toFixed(2);
+            card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+          });
+          card.addEventListener('mouseleave', ()=>{ card.style.transform = 'none'; });
+        });
+
+        // Footer year
+        document.getElementById('year').textContent = new Date().getFullYear();
+      
+        // Scroll progress bar
+        const progress = document.getElementById('scrollProgress');
+        function updateProgress(){ const h = document.documentElement.scrollHeight - window.innerHeight; const p = (window.scrollY / h) * 100; if(progress) progress.style.width = Math.min(Math.max(p,0),100) + '%'; }
+        window.addEventListener('scroll', updateProgress); updateProgress();
+
+        // Back to top visibility
+        const toTop = document.getElementById('toTop');
+        window.addEventListener('scroll', ()=>{ if(window.scrollY>400){ toTop.style.display='block' } else { toTop.style.display='none' } });
+        if(toTop) toTop.addEventListener('click', ()=> window.scrollTo({top:0,behavior:'smooth'}));
+
+        // Animated counters when visible
+        const counters = document.querySelectorAll('[data-target]');
+        function animateCounter(el){ const target = +el.getAttribute('data-target'); let current = 0; const step = Math.max(1, Math.floor(target/80)); const iv = setInterval(()=>{ current += step; if(current>=target){ el.textContent = target; clearInterval(iv);} else el.textContent = current; },12); }
+        if('IntersectionObserver' in window && counters.length){
+          const coi = new IntersectionObserver((entries)=>{ entries.forEach(entry=>{ if(entry.isIntersecting){ animateCounter(entry.target); coi.unobserve(entry.target); } }); }, {threshold:0.4});
+          counters.forEach(c=>coi.observe(c));
+        } else { counters.forEach(c=>animateCounter(c)); }
+        
+        // Animate skill bars when they enter the viewport
+        const skillEls = document.querySelectorAll('.skill-progress');
+        function animateSkill(el){ const pct = +el.getAttribute('data-percent') || 0; el.style.width = pct + '%'; el.setAttribute('aria-valuenow', pct); }
+        if('IntersectionObserver' in window && skillEls.length){
+          const ski = new IntersectionObserver((entries)=>{ entries.forEach(entry=>{ if(entry.isIntersecting){ animateSkill(entry.target); ski.unobserve(entry.target); } }); }, {threshold:0.18});
+          skillEls.forEach(s=>ski.observe(s));
+        } else { skillEls.forEach(s=>animateSkill(s)); }
+
+        /* ------- Interactive resume editing (modal panels) ------- */
+        // Experience modal elements
+        const expModalEl = document.getElementById('expModal');
+        const expTitleEl = document.getElementById('expTitle');
+        const expDatesEl = document.getElementById('expDates');
+        const expBulletsEl = document.getElementById('expBullets');
+        const expSaveBtn = document.getElementById('expSave');
+        const expCancelBtn = document.getElementById('expCancel');
+
+        function renderExperience(item){
+          const art = document.createElement('article'); art.className = 'bg-white rounded-lg p-5 shadow reveal exp-item';
+          art.innerHTML = `<div class="flex justify-between items-start">\n                    <div>\n                      <h3 class="font-semibold">${escapeHtml(item.title)}</h3>\n                      <p class="text-sm text-slate-500">${escapeHtml(item.dates)}</p>\n                    </div>\n                    <div class="flex gap-2">\n                      <button class="edit-exp text-slate-500 hover:text-sky-600" title="Edit"><i class="fas fa-pen"></i></button>\n                      <button class="del-exp text-slate-500 hover:text-red-600" title="Delete"><i class="fas fa-trash"></i></button>\n                    </div>\n                  </div>\n                  <ul class="mt-3 text-slate-600 list-disc list-inside">${item.bullets.map(b=>`<li>${escapeHtml(b)}</li>`).join('')}</ul>`;
+          // ensure reveal items are visible when dynamically added
+          art.classList.add('active');
+          // hide editor controls by default
+          art.querySelectorAll('.edit-exp, .del-exp').forEach(btn=>{ btn.classList.add('editor-hidden'); });
+          return art;
+        }
+
+        // Persistence helpers for experiences
+        const STORAGE_EXP = 'jp_experiences_v1';
+        const DEFAULT_EXPS = [
+          { title: 'Mumuso — POS IT Support', dates: 'Oct 27, 2022 - Present', bullets: ['Troubleshooted printers, networks, and computers.', 'Conducted system and OS backups and restores.', 'Maintained and repaired POS printers.', 'Provided support for POS systems.', 'Setup store branches with necessary IT infrastructure.'] },
+          { title: 'Medexpress — Local IT Support', dates: 'Jan 25, 2021 - June 25, 2022', bullets: ['Created Domain accounts and managed folder shares for domain users.', 'Managed firewall and internet connections.', 'Utilized ticketing tools to track and resolve IT issues.', 'Troubleshot computer and printer problems.', 'Set up computers, software, and networks for branch offices.', 'Uploaded data to SAP 760.', 'Provided troubleshooting support for MS Office applications, including Outlook email configuration.'] },
+          { title: 'VST-ECS — Lenovo Field Engineer', dates: 'Oct 10, 2020 - Jan 20, 2021', bullets: ['Installed and repaired computers, including installing server parts and cloning PCs.'] },
+          { title: 'MSI-ECS — Service Technician', dates: 'May 2, 2018 - Sep 5, 2018', bullets: ['Installed and repaired computers, including installing server parts and cloning PCs.'] }
+        ];
+        function saveExperiences(){
+          const arr = Array.from(document.querySelectorAll('#experienceList .exp-item')).map(art=>({
+            title: art.querySelector('h3')?.textContent.trim()||'',
+            dates: art.querySelector('p')?.textContent.trim()||'',
+            bullets: Array.from(art.querySelectorAll('ul li')).map(li=>li.textContent.trim())
+          }));
+          try{ localStorage.setItem(STORAGE_EXP, JSON.stringify(arr)); }catch(e){ console.warn('saveExperiences failed', e); }
+        }
+
+        function loadExperiences(){
+          try{
+            const raw = localStorage.getItem(STORAGE_EXP);
+            if(!raw) return false;
+            const arr = JSON.parse(raw);
+            if(!Array.isArray(arr) || arr.length === 0) return false;
+            expList.innerHTML = '';
+            arr.forEach(item=>{ const node = renderExperience(item); expList.appendChild(node); });
+            return true;
+          }catch(e){ console.warn('loadExperiences failed', e); return false; }
+        }
+
+        // Ensure there is visible content: if no saved experiences, populate defaults
+        const _loaded = loadExperiences();
+        if(!_loaded){
+          // if DOM has no experience items, insert defaults
+          if(!document.querySelectorAll('#experienceList .exp-item').length){
+            DEFAULT_EXPS.forEach(it=> expList.appendChild(renderExperience(it)));
+            saveExperiences();
+          }
+        }
+
+        function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+        // Show experience modal and return result via Promise
+        function showExpModal(data){
+          return new Promise(resolve=>{
+            expModalEl.classList.remove('hidden'); expModalEl.classList.add('flex');
+            expTitleEl.value = data?.title || '';
+            expDatesEl.value = data?.dates || '';
+            expBulletsEl.value = (data?.bullets || []).join('\n');
+            expTitleEl.focus();
+
+            function cleanup(){ expModalEl.classList.add('hidden'); expModalEl.classList.remove('flex'); expSaveBtn.removeEventListener('click', onSave); expCancelBtn.removeEventListener('click', onCancel); }
+            function onSave(){ const bullets = expBulletsEl.value.split('\n').map(s=>s.trim()).filter(Boolean); const result = { title: expTitleEl.value.trim(), dates: expDatesEl.value.trim(), bullets }; cleanup(); resolve(result); }
+            function onCancel(){ cleanup(); resolve(null); }
+            expSaveBtn.addEventListener('click', onSave);
+            expCancelBtn.addEventListener('click', onCancel);
+          });
+        }
+
+        const expList = document.getElementById('experienceList');
+        // hide add buttons by default
+        document.getElementById('addExpBtn').classList.add('editor-hidden');
+        document.getElementById('addExpBtn').addEventListener('click', async ()=>{
+          const res = await showExpModal();
+          if(res){ const node = renderExperience(res); expList.prepend(node); saveExperiences(); }
+        });
+
+        function attachExpHandlers(root){
+          root.querySelectorAll('.edit-exp').forEach(btn=> btn.addEventListener('click', async ()=>{
+            const art = btn.closest('.exp-item');
+            const title = art.querySelector('h3').textContent.trim();
+            const dates = art.querySelector('p').textContent.trim();
+            const bullets = Array.from(art.querySelectorAll('ul li')).map(li=>li.textContent.trim());
+            const data = await showExpModal({title, dates, bullets});
+            if(data){ const newArt = renderExperience(data); art.replaceWith(newArt); saveExperiences(); }
+          }));
+          root.querySelectorAll('.del-exp').forEach(btn=> btn.addEventListener('click', ()=>{ if(confirm('Remove this experience?')){ btn.closest('.exp-item').remove(); saveExperiences(); } }));
+        }
+        // If stored experiences exist, load them and replace placeholders
+        loadExperiences();
+
+        // Skills: modal-based edit and add
+        const skillsContainer = document.getElementById('skillsContainer');
+        const skillModalEl = document.getElementById('skillModal');
+        const skillNameEl = document.getElementById('skillName');
+        const skillPercentEl = document.getElementById('skillPercent');
+        const skillSaveBtn = document.getElementById('skillSave');
+        const skillCancelBtn = document.getElementById('skillCancel');
+        let _currentProgressEl = null;
+
+        // Editor controls: hidden by default, toggled with Ctrl+Alt+J
+        let editingMode = false;
+        const _editorSelectors = '.edit-exp, .del-exp, .edit-skill, .del-skill, #addSkillBtn, #addExpBtn';
+        function setEditingMode(on){
+          editingMode = !!on;
+          document.querySelectorAll(_editorSelectors).forEach(el=>{
+            if(editingMode) el.classList.remove('editor-hidden'); else el.classList.add('editor-hidden');
+          });
+        }
+        // start hidden
+        setEditingMode(false);
+
+        function showSkillModal(currentEl){
+          return new Promise(resolve=>{
+            _currentProgressEl = currentEl || null;
+            skillModalEl.classList.remove('hidden'); skillModalEl.classList.add('flex');
+            const currentPct = _currentProgressEl ? (+_currentProgressEl.getAttribute('data-percent')||0) : 70;
+            const currentName = _currentProgressEl ? (_currentProgressEl.closest('.skill').querySelector('.label span').textContent || '') : '';
+            skillNameEl.value = currentName;
+            skillPercentEl.value = String(currentPct);
+            skillNameEl.focus();
+
+            function cleanup(){ skillModalEl.classList.add('hidden'); skillModalEl.classList.remove('flex'); skillSaveBtn.removeEventListener('click', onSave); skillCancelBtn.removeEventListener('click', onCancel); }
+            function onSave(){ const name = skillNameEl.value.trim(); let pct = Math.max(0, Math.min(100, Number(skillPercentEl.value)||0)); cleanup(); resolve({ name, percent: pct, progressEl: _currentProgressEl }); }
+            function onCancel(){ cleanup(); resolve(null); }
+            skillSaveBtn.addEventListener('click', onSave);
+            skillCancelBtn.addEventListener('click', onCancel);
+          });
+        }
+
+        // hide add skill button by default
+        document.getElementById('addSkillBtn').classList.add('editor-hidden');
+        document.getElementById('addSkillBtn').addEventListener('click', async ()=>{
+          const res = await showSkillModal(null);
+          if(!res) return;
+          const wrap = document.createElement('div'); wrap.className='skill';
+          wrap.innerHTML = `<div class="label"><span>${escapeHtml(res.name)}</span><span><span class="skill-val">${res.percent}%</span> <button class="edit-skill text-slate-500 ml-2" title="Edit"><i class="fas fa-pen"></i></button> <button class="del-skill text-slate-500 ml-2" title="Delete"><i class="fas fa-trash"></i></button></span></div><div class="skill-track"><div class="skill-progress" data-percent="${res.percent}" aria-valuenow="0"></div></div>`;
+          // hide editor controls on the newly created skill unless editingMode is active
+          wrap.querySelectorAll('.edit-skill,.del-skill').forEach(b=>{ b.classList.add('editor-hidden'); if(!editingMode) b.style.display = 'none'; });
+          skillsContainer.appendChild(wrap);
+          requestAnimationFrame(()=> wrap.querySelector('.skill-progress').style.width = res.percent + '%');
+          saveSkills();
+        });
+
+        // Skills persistence
+        const STORAGE_SK = 'jp_skills_v1';
+        function saveSkills(){
+          const arr = Array.from(document.querySelectorAll('#skillsContainer .skill')).map(el=>({
+            name: el.querySelector('.label span')?.textContent.trim()||'',
+            percent: +el.querySelector('.skill-progress')?.getAttribute('data-percent')||0
+          }));
+          try{ localStorage.setItem(STORAGE_SK, JSON.stringify(arr)); }catch(e){ console.warn('saveSkills failed', e); }
+        }
+
+        function renderSkill(item){ const wrap = document.createElement('div'); wrap.className='skill'; wrap.innerHTML = `<div class="label"><span>${escapeHtml(item.name)}</span><span><span class="skill-val">${item.percent}%</span> <button class="edit-skill text-slate-500 ml-2" title="Edit"><i class="fas fa-pen"></i></button> <button class="del-skill text-slate-500 ml-2" title="Delete"><i class="fas fa-trash"></i></button></span></div><div class="skill-track"><div class="skill-progress" data-percent="${item.percent}" aria-valuenow="0"></div></div>`; wrap.querySelectorAll('.edit-skill,.del-skill').forEach(b=>b.classList.add('editor-hidden')); return wrap; }
+
+        function loadSkills(){ try{ const raw = localStorage.getItem(STORAGE_SK); if(!raw) return false; const arr = JSON.parse(raw); if(!Array.isArray(arr)) return false; skillsContainer.innerHTML = ''; arr.forEach(it=>{ const node = renderSkill(it); skillsContainer.appendChild(node); }); return true; }catch(e){ console.warn('loadSkills failed', e); return false; } }
+
+        // Try loading saved skills (replaces initial placeholders if present)
+        loadSkills();
+        // hide existing editor buttons and add buttons by default
+        document.querySelectorAll('.edit-exp, .del-exp, .edit-skill, .del-skill').forEach(btn=> btn.classList.add('editor-hidden'));
+        document.getElementById('addSkillBtn').classList.add('editor-hidden');
+        document.getElementById('addExpBtn').classList.add('editor-hidden');
+
+        // Initialize widths for skills already present (if IntersectionObserver missed them)
+        document.querySelectorAll('.skill-progress').forEach(s=>{ const pct = +s.getAttribute('data-percent')||0; s.style.width = pct + '%'; });
+
+        // EVENT DELEGATION: make edit/delete work for experiences and skills (handles dynamic items)
+        // Experiences
+        document.getElementById('experienceList').addEventListener('click', async (e)=>{
+          const del = e.target.closest('.del-exp');
+          const edit = e.target.closest('.edit-exp');
+          if(del){
+            const art = del.closest('.exp-item');
+            // require keyboard-unlock (editingMode) to allow delete
+            if(!editingMode) return; 
+            if(confirm('Remove this experience?')){ art.remove(); saveExperiences(); }
+            return;
+          }
+          if(edit){ const art = edit.closest('.exp-item'); const title = art.querySelector('h3').textContent.trim(); const dates = art.querySelector('p').textContent.trim(); const bullets = Array.from(art.querySelectorAll('ul li')).map(li=>li.textContent.trim()); const data = await showExpModal({title, dates, bullets}); if(data){ const newArt = renderExperience(data); art.replaceWith(newArt); saveExperiences(); }}
+        });
+
+        // Skills delegation (edit)
+        document.getElementById('skillsContainer').addEventListener('click', async (e)=>{
+          const btn = e.target.closest('.edit-skill');
+          const del = e.target.closest('.del-skill');
+          if(del){
+            const sk = del.closest('.skill');
+            if(!editingMode) return;
+            if(confirm('Remove this skill?')){ sk.remove(); saveSkills(); }
+            return;
+          }
+          if(!btn) return;
+          const progressEl = btn.closest('.skill').querySelector('.skill-progress');
+          const res = await showSkillModal(progressEl);
+          if(!res) return;
+          // if editing existing
+          if(res.progressEl){
+            res.progressEl.setAttribute('data-percent', res.percent);
+            const valLabel = res.progressEl.closest('.skill').querySelector('.skill-val');
+            if(valLabel) valLabel.textContent = res.percent + '%';
+            const nameLabel = res.progressEl.closest('.skill').querySelector('.label span');
+            if(nameLabel && res.name) nameLabel.textContent = res.name;
+            requestAnimationFrame(()=> res.progressEl.style.width = res.percent + '%');
+            saveSkills();
+          }
+        });
+
+        // Keyboard shortcut to toggle editor controls (Ctrl+Alt+J)
+        document.addEventListener('keydown', (e)=>{
+          if(e.ctrlKey && e.altKey && e.key.toLowerCase()==='j'){
+            setEditingMode(!editingMode);
+          }
+        });
+
+        // Email buttons
+        const mailtoBtn = document.getElementById('mailtoBtn');
+        const copyEmailBtn = document.getElementById('copyEmailBtn');
+        const emailAddress = 'jomspadonan15@gmail.com';
+        if(mailtoBtn) mailtoBtn.addEventListener('click', ()=>{
+          const subject = encodeURIComponent('Hello from your portfolio');
+          const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(emailAddress)}&su=${subject}`;
+          window.open(gmailUrl, '_blank');
+        });
+        if(copyEmailBtn) copyEmailBtn.addEventListener('click', ()=>{ navigator.clipboard?.writeText(emailAddress).then(()=>{ copyEmailBtn.textContent = 'Copied'; setTimeout(()=> copyEmailBtn.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy',1200); }).catch(()=> alert('Copy failed — select and copy manually')); });
+
+        
+      </script>
+    </body>
+  </html>
+  </div>
