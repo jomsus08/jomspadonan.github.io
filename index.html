@@ -908,11 +908,14 @@
         });
         if(copyEmailBtn) copyEmailBtn.addEventListener('click', ()=>{ navigator.clipboard?.writeText(emailAddress).then(()=>{ copyEmailBtn.textContent = 'Copied'; setTimeout(()=> copyEmailBtn.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy',1200); }).catch(()=> alert('Copy failed — select and copy manually')); });
 
-        
+        window.onbeforeunload = function () {
+    window.scrollTo(0, 0);
+  };
       </script>
     </body>
   </html>
   </div>
+
 
 
 
