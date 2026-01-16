@@ -157,9 +157,11 @@
 
     <body class="text-slate-800">
       <div id="scrollProgress"></div>
-     <nav class="fixed w-full z-40 bg-white shadow">
+      <nav class="fixed w-full z-40 bg-white shadow">
   <div class="container mx-auto px-4 py-4 flex items-center justify-between">
     <a href="#home" class="text-xl font-bold text-sky-600">JomarPadonan</a>
+    
+    <!-- Desktop Menu -->
     <div class="hidden md:flex items-center gap-6 text-sm text-slate-700">
       <a href="#home" class="hover:underline">Home</a>
       <a href="#about" class="hover:underline">About</a>
@@ -176,7 +178,21 @@
         </div>
       </div>
     </div>
-    <button id="burger" class="md:hidden text-slate-700"><i class="fas fa-bars fa-lg"></i></button>
+
+    <!-- Burger Menu Button -->
+    <button id="burger" class="md:hidden text-slate-700">
+      <i class="fas fa-bars fa-lg"></i>
+    </button>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div id="mobileMenu" class="md:hidden overflow-hidden max-h-0 transition-all duration-300 bg-white">
+    <ul class="flex flex-col px-4 py-2 gap-2">
+      <li><a href="#home" class="block py-2">Home</a></li>
+      <li><a href="#about" class="block py-2">About</a></li>
+      <li><a href="#projects" class="block py-2">Projects</a></li>
+      <li><a href="#contact" class="block py-2">Contact</a></li>
+    </ul>
   </div>
 </nav>
 
@@ -651,4 +667,5 @@
     </body>
   </html>
   </div>
+
 
