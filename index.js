@@ -118,14 +118,44 @@ function listenUserMessages() {
   });
 }
 
-// ===== USER CHAT ACTIONS =====
+// 1. START CHAT BUTTON (Dito papasok ang bagong user)
+startChat.addEventListener('click', () => {
+  const typedName = nameInput.value.trim();
+  if (typedName === "") {
+    alert("Mangyaring ilagay ang iyong pangalan!");
+    return;
+  }
+
+  username = typedName;
+  userId = "user_" + Date.now(); 
+
+  localStorage.setItem('username', username);
+  localStorage.setItem('userId', userId);
+
+  // UI TRANSITION
+  nameContainer.style.display = 'none';
+  messagesDiv.classList.remove('hidden');
+  inputContainer.classList.remove('hidden');
+
+  listenUserMessages();
+});
+
+// 2. CHAT ICON (Dito binubuksan ang chat window)
 chatIcon.addEventListener('click', () => {
+  // Ipakita ang window, itago ang icon
   chatWindow.classList.remove('hidden');
   chatWindow.style.display = 'flex';
   chatIcon.style.display = 'none';
+  
   resetBadge(); 
 
+  // Kung may userId na, i-load ang history
   if (userId) {
+    // Siguraduhin na kita ang tamang container
+    nameContainer.style.display = 'none';
+    messagesDiv.classList.remove('hidden');
+    inputContainer.classList.remove('hidden');
+
     messagesDiv.innerHTML = '';
     db.ref(`users/${userId}/messages`).once('value', snap => {
       snap.forEach(child => {
@@ -133,9 +163,15 @@ chatIcon.addEventListener('click', () => {
       });
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
+  } else {
+    // Kung wala pang userId, ipakita muna ang inputan ng pangalan
+    nameContainer.style.display = 'block';
+    messagesDiv.classList.add('hidden');
+    inputContainer.classList.add('hidden');
   }
 });
 
+// 3. CLOSE BUTTON
 const closeChatBtn = document.getElementById('closeChat');
 if (closeChatBtn) {
   closeChatBtn.addEventListener('click', () => {
@@ -144,6 +180,7 @@ if (closeChatBtn) {
     chatIcon.style.display = 'flex';
   });
 }
+
 
 function renderMessage(msg) {
   const div = document.createElement('div');
