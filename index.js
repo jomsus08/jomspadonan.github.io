@@ -1,37 +1,3 @@
-// 1. Siguraduhin na nandito ang mga elements (sa taas ng script)
-const startChatBtn = document.getElementById('startChat');
-const nameInputEl = document.getElementById('nameInput'); // check mo kung nameInput din ID nito sa HTML
-
-// 2. ILAGAY MO ITO SA ILALIM NG "// ===== USER CHAT ACTIONS ====="
-if (startChatBtn) {
-    startChatBtn.addEventListener('click', function(e) {
-        e.preventDefault(); // Eto ang fix para ma-click at hindi mag-refresh ang page
-        
-        const typedName = nameInputEl.value.trim();
-        
-        if (typedName === "") {
-            alert("Mangyaring ilagay ang iyong pangalan!");
-            return;
-        }
-
-        // I-set ang user info
-        username = typedName;
-        userId = "user_" + Date.now(); 
-
-        localStorage.setItem('username', username);
-        localStorage.setItem('userId', userId);
-
-        // UI Update: Itago ang login, ipakita ang chat
-        if (nameContainer) nameContainer.style.display = 'none';
-        if (messagesDiv) messagesDiv.classList.remove('hidden');
-        if (inputContainer) inputContainer.classList.remove('hidden');
-
-        // Simulan ang pakikinig sa messages
-        listenUserMessages();
-        
-        console.log("Chat started for:", username);
-    });
-}
 
 
 // ===== FIREBASE CONFIG =====
@@ -204,6 +170,41 @@ chatIcon.addEventListener('click', () => {
     inputContainer.classList.add('hidden');
   }
 });
+// 1. Siguraduhin na nandito ang mga elements (sa taas ng script)
+const startChatBtn = document.getElementById('startChat');
+const nameInputEl = document.getElementById('nameInput'); // check mo kung nameInput din ID nito sa HTML
+
+// 2. ILAGAY MO ITO SA ILALIM NG "// ===== USER CHAT ACTIONS ====="
+if (startChatBtn) {
+    startChatBtn.addEventListener('click', function(e) {
+        e.preventDefault(); // Eto ang fix para ma-click at hindi mag-refresh ang page
+        
+        const typedName = nameInputEl.value.trim();
+        
+        if (typedName === "") {
+            alert("Mangyaring ilagay ang iyong pangalan!");
+            return;
+        }
+
+        // I-set ang user info
+        username = typedName;
+        userId = "user_" + Date.now(); 
+
+        localStorage.setItem('username', username);
+        localStorage.setItem('userId', userId);
+
+        // UI Update: Itago ang login, ipakita ang chat
+        if (nameContainer) nameContainer.style.display = 'none';
+        if (messagesDiv) messagesDiv.classList.remove('hidden');
+        if (inputContainer) inputContainer.classList.remove('hidden');
+
+        // Simulan ang pakikinig sa messages
+        listenUserMessages();
+        
+        console.log("Chat started for:", username);
+    });
+}
+
 
 // 3. CLOSE BUTTON
 const closeChatBtn = document.getElementById('closeChat');
@@ -218,27 +219,56 @@ if (closeChatBtn) {
 
 function renderMessage(msg) {
   const div = document.createElement('div');
-  div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
-    (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
-  div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-// ===== USER REPLY ACTION (ENTER COMMAND) =====
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && input.value.trim() !== '') {
-    const text = input.value.trim();
-    
-    // I-save sa Firebase
-    db.ref(`users/${userId}/messages`).push({
-      name: username,
-      text: text,
-      timestamp: Date.now(),
-      sender: 'user',
-      isRead: true // Mark as read agad dahil ang user ang nagsulat
-    });
+  const isUser = msg.sender === 'user';
+  
+  div.className = `flex flex-col ${isUser ? 'items-end' : 'items-start'} mb-3`;
 
-    input.value = ''; // Linisin ang input box pagkasend
+  const bubbleClass = isUser 
+    ? 'bg-blue-500 text-white rounded-l-lg rounded-tr-lg' 
+    : 'bg-gray-200 text-gray-800 rounded-r-lg rounded-tl-lg';
+
+  // --- STATUS LOGIC PARA SA ADMIN ---
+  // Kung ikaw ang Admin at tinitignan mo ang reply mo sa user:
+  let statusText = "";
+  if (msg.sender === 'admin') {
+     statusText = msg.isRead ? "Seen" : "Sent";
+  } else if (msg.sender === 'user') {
+     statusText = msg.isRead ? "Seen" : "Sent";
+  }
+
+  div.innerHTML = `
+    <div class="px-3 py-2 max-w-[80%] ${bubbleClass} shadow-sm">
+      <p class="text-sm">${msg.text}</p>
+    </div>
+    <span class="text-[10px] text-gray-400 mt-1">${statusText}</span>
+  `;
+
+  // messagesDiv (sa user) o adminMessages (sa admin)
+  const targetDiv = adminPanel && !adminPanel.classList.contains('hidden') ? adminMessages : messagesDiv;
+  targetDiv.appendChild(div);
+  targetDiv.scrollTop = targetDiv.scrollHeight;
+}
+
+// ===== USER REPLY ACTION (ENTER COMMAND) =====
+// Siguraduhin na ang ID ng input mo sa HTML ay id="input"
+input.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && this.value.trim() !== '') {
+    const messageText = this.value.trim();
+    
+    // I-push ang message sa Firebase
+    if (userId) {
+      db.ref(`users/${userId}/messages`).push({
+        name: username,
+        text: messageText,
+        timestamp: Date.now(),
+        sender: 'user',
+        isRead: false // Default ay false hangga't 'di nakikita ni Admin
+      });
+      
+      this.value = ''; // Linisin ang input box pagkatapos mag-send
+    } else {
+      alert("Please start the chat first.");
+    }
   }
 });
 
@@ -733,4 +763,3 @@ window.addEventListener('resize', () => {
         window.onbeforeunload = function () {
     window.scrollTo(0, 0);
   };
-
