@@ -116,39 +116,45 @@ function listenUserMessages() {
   messagesRef.off('child_added');
 
   // Listen for new messages
-  messagesRef.on('child_added', snap => {
-    const msg = snap.val();
-    const div = document.createElement('div');
-    let appendMessage = false;
+  // Inside your existing listenUserMessages() function
+messagesRef.on('child_added', snap => {
+  const msg = snap.val();
+  const div = document.createElement('div');
+  let appendMessage = false;
 
-    // Check if chat is visible
-    const chatVisible = window.getComputedStyle(chatWindow).display !== 'none';
+  // Check if chat is open
+  const chatVisible = chatWindow.style.display !== 'none';
 
-    if (msg.sender === 'user') {
-      div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-blue-100 self-end';
-      div.innerHTML = `<strong>You:</strong> ${msg.text}`;
+  if (msg.sender === 'user') {
+    div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-blue-100 self-end';
+    div.innerHTML = `<strong>You:</strong> ${msg.text}`;
+    appendMessage = true;
+  } else if (msg.sender === 'admin') {
+    div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-gray-100 self-start';
+    div.innerHTML = `<strong>Admin:</strong> ${msg.text}`;
+
+    if (!chatVisible) {
+      // Chat is minimized → increment badge
+      let count = parseInt(userChatBadge.textContent) || 0;
+      count++;
+      userChatBadge.textContent = count;
+      userChatBadge.classList.remove('hidden');
+    } else {
       appendMessage = true;
-    } else if (msg.sender === 'admin') {
-      div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-gray-100 self-start';
-      div.innerHTML = `<strong>Admin:</strong> ${msg.text}`;
-
-      if (!chatVisible) {
-        // Chat is minimized → increment badge
-        let count = parseInt(userChatBadge.textContent) || 0;
-        count++;
-        userChatBadge.textContent = count;
-        userChatBadge.classList.remove('hidden');
-      } else {
-        appendMessage = true;
-      }
+      // Reset badge if chat is open
+      userChatBadge.textContent = '0';
+      userChatBadge.classList.add('hidden');
     }
+  }
 
-    if (appendMessage) {
-      messagesDiv.appendChild(div);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-  });
+  if (appendMessage) {
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+});
+
 }
+
 
 // Chat icon click → open chat and reset badge
 chatIcon.addEventListener('click', () => {
