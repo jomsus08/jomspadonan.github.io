@@ -1,3 +1,5 @@
+
+
 // ===== FIREBASE CONFIG =====
 const firebaseConfig = {
   apiKey: "AIzaSyBUH4cFCq7-pjjbHZZNCdkm1m-VX04E6ik",
@@ -20,10 +22,7 @@ const nameInput = document.getElementById('nameInput');
 const startChat = document.getElementById('startChat');
 const nameContainer = document.getElementById('nameContainer');
 const inputContainer = document.getElementById('inputContainer');
-
 const userChatBadge = document.getElementById('userChatBadge');
-
-
 
 const adminPanel = document.getElementById('adminPanel');
 const closeAdmin = document.getElementById('closeAdmin');
@@ -32,7 +31,6 @@ const adminMessages = document.getElementById('adminMessages');
 const adminInput = document.getElementById('adminInput');
 const archiveBtn = document.getElementById('archiveChat');
 const deleteBtn = document.getElementById('deleteChat');
-
 const navbarChatBadge = document.getElementById('navbarChatBadge');
 const navbarChatIcon = document.getElementById('navbarChatIcon');
 
@@ -40,143 +38,150 @@ const navbarChatIcon = document.getElementById('navbarChatIcon');
 let username = localStorage.getItem('username') || "";
 let userId = localStorage.getItem('userId') || "";
 let selectedAdminUser = null;
-let adminEnabled = false; // admin mode toggle
+let adminEnabled = false;
+let isInitialLoad = true; // Flag para pigilan ang pagdagdag sa unang load
 
-// ===== USER CHAT =====
+// ===== PERSISTENT USER BADGE =====
+let userBadge = 0; // Gawing 0 muna, kukunin natin ang tama sa Firebase
 
-// Open chat window
-chatIcon.addEventListener('click', () => {
-  chatWindow.style.display = 'flex';
-  chatIcon.style.display = 'none';
-
-  // Clear notification badge
-  userChatBadge.classList.add('hidden');
-  userChatBadge.textContent = '0';
-
-  // Load all messages
-  if (userId) {
-    messagesDiv.innerHTML = '';
-    db.ref(`users/${userId}/messages`).once('value', snap => {
-      snap.forEach(child => {
-        const msg = child.val();
-        const div = document.createElement('div');
-        div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
-          (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
-        div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
-        messagesDiv.appendChild(div);
-      });
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
+function updateBadgeUI() {
+  userChatBadge.textContent = userBadge;
+  if (userBadge <= 0) {
+    userChatBadge.classList.add('hidden');
+    localStorage.setItem('userBadge', '0');
+  } else {
+    userChatBadge.classList.remove('hidden');
+    localStorage.setItem('userBadge', userBadge);
   }
-});
-
-// Close chat (optional if you have a close button)
-if(document.getElementById('closeChat')){
-  document.getElementById('closeChat').addEventListener('click', () => {
-    chatWindow.style.display = 'none';
-    chatIcon.style.display = 'flex';
-  });
 }
 
-// Start chat
-startChat.addEventListener('click', () => {
-  if (!nameInput.value.trim()) return alert("Enter your name!");
-  username = nameInput.value.trim();
-  userId = userId || "user_" + Date.now();
-  localStorage.setItem('username', username);
-  localStorage.setItem('userId', userId);
+function incrementBadge() {
+  userBadge++;
+  updateBadgeUI();
+}
 
-  nameContainer.style.display = 'none';
-  messagesDiv.classList.remove('hidden');
-  inputContainer.classList.remove('hidden');
-
-  listenUserMessages();
-});
-
-// Send user message
-input.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && input.value.trim() !== '') {
-    db.ref(`users/${userId}/messages`).push({
-      name: username,
-      text: input.value.trim(),
-      timestamp: Date.now(),
-      sender: 'user'
+function resetBadge() {
+  userBadge = 0;
+  updateBadgeUI();
+  
+  if (userId) {
+    db.ref(`users/${userId}/messages`).once('value', snap => {
+      snap.forEach(child => {
+        if (child.val().sender === 'admin' && !child.val().isRead) {
+          child.ref.update({ isRead: true });
+        }
+      });
     });
-    input.value = '';
   }
-});
+}
 
-// Listen for messages (user receives admin messages even when chat is closed)
-
-
+// ===== LISTEN FOR MESSAGES =====
 function listenUserMessages() {
   if (!userId) return;
 
   const messagesRef = db.ref(`users/${userId}/messages`);
   messagesRef.off('child_added');
 
-  // Listen for new messages
-  // Inside your existing listenUserMessages() function
-messagesRef.on('child_added', snap => {
-  const msg = snap.val();
-  const div = document.createElement('div');
-  let appendMessage = false;
+  // STEP 1: Kunin ang tamang count base sa unread messages sa DB (Para iwas multiply sa refresh)
+  messagesRef.once('value', snapshot => {
+    let count = 0;
+    snapshot.forEach(child => {
+      const m = child.val();
+      if (m.sender === 'admin' && m.isRead !== true) {
+        count++;
+      }
+    });
+    userBadge = count;
+    updateBadgeUI();
+    isInitialLoad = false; // Tapos na ang initial counting
+  });
 
-  // Check if chat is open
-  const chatVisible = chatWindow.style.display !== 'none';
+  // STEP 2: Makinig sa mga DARATING na bagong messages
+  messagesRef.on('child_added', snap => {
+    const msg = snap.val();
+    const chatVisible = chatWindow.style.display === 'flex';
 
-  if (msg.sender === 'user') {
-    div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-blue-100 self-end';
-    div.innerHTML = `<strong>You:</strong> ${msg.text}`;
-    appendMessage = true;
-  } else if (msg.sender === 'admin') {
-    div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-gray-100 self-start';
-    div.innerHTML = `<strong>Admin:</strong> ${msg.text}`;
-
-    if (!chatVisible) {
-      // Chat is minimized → increment badge
-      let count = parseInt(userChatBadge.textContent) || 0;
-      count++;
-      userChatBadge.textContent = count;
-      userChatBadge.classList.remove('hidden');
-    } else {
-      appendMessage = true;
-      // Reset badge if chat is open
-      userChatBadge.textContent = '0';
-      userChatBadge.classList.add('hidden');
+    if (msg.sender === 'user') {
+      if (chatVisible) renderMessage(msg);
+    } else if (msg.sender === 'admin') {
+      if (!chatVisible) {
+        // Mag-increment lang kung TAPOS na ang initial load (real-time message)
+        if (!isInitialLoad && msg.isRead !== true) {
+          incrementBadge();
+        }
+      } else {
+        // Mark as read agad kung nakabukas ang chat
+        snap.ref.update({ isRead: true });
+        renderMessage(msg);
+      }
     }
-  }
-
-  if (appendMessage) {
-    messagesDiv.appendChild(div);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
-});
-
+  });
 }
 
-
-// Chat icon click → open chat and reset badge
+// ===== USER CHAT ACTIONS =====
 chatIcon.addEventListener('click', () => {
+  chatWindow.classList.remove('hidden');
   chatWindow.style.display = 'flex';
   chatIcon.style.display = 'none';
-  userChatBadge.classList.add('hidden');
-  userChatBadge.textContent = '0';
+  resetBadge(); 
+
+  if (userId) {
+    messagesDiv.innerHTML = '';
+    db.ref(`users/${userId}/messages`).once('value', snap => {
+      snap.forEach(child => {
+        renderMessage(child.val());
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  }
 });
 
-// Close chat
-document.getElementById('closeChat')?.addEventListener('click', () => {
-  chatWindow.style.display = 'none';
-  chatIcon.style.display = 'flex';
+const closeChatBtn = document.getElementById('closeChat');
+if (closeChatBtn) {
+  closeChatBtn.addEventListener('click', () => {
+    chatWindow.style.display = 'none';
+    chatWindow.classList.add('hidden');
+    chatIcon.style.display = 'flex';
+  });
+}
+
+function renderMessage(msg) {
+  const div = document.createElement('div');
+  div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
+    (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
+  div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+// ===== USER REPLY ACTION (ENTER COMMAND) =====
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && input.value.trim() !== '') {
+    const text = input.value.trim();
+    
+    // I-save sa Firebase
+    db.ref(`users/${userId}/messages`).push({
+      name: username,
+      text: text,
+      timestamp: Date.now(),
+      sender: 'user',
+      isRead: true // Mark as read agad dahil ang user ang nagsulat
+    });
+
+    input.value = ''; // Linisin ang input box pagkasend
+  }
 });
 
-// Auto-load existing user session
+// Auto-load user session
 if (username && userId) {
-  nameContainer.style.display = 'none';
+  if (nameContainer) nameContainer.style.display = 'none';
   messagesDiv.classList.remove('hidden');
   inputContainer.classList.remove('hidden');
   listenUserMessages();
 }
+
+
+
+
 
 
 // ===== ADMIN PANEL =====
