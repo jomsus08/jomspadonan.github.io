@@ -14,13 +14,16 @@ const db = firebase.database();
 // ===== ELEMENTS =====
 const chatIcon = document.getElementById('chatIcon');
 const chatWindow = document.getElementById('chat');
-const closeChatBtn = document.getElementById('closeChat');
 const messagesDiv = document.getElementById('messages');
 const input = document.getElementById('input');
 const nameInput = document.getElementById('nameInput');
 const startChat = document.getElementById('startChat');
 const nameContainer = document.getElementById('nameContainer');
 const inputContainer = document.getElementById('inputContainer');
+
+const userChatBadge = document.getElementById('userChatBadge');
+
+
 
 const adminPanel = document.getElementById('adminPanel');
 const closeAdmin = document.getElementById('closeAdmin');
@@ -41,15 +44,39 @@ let adminEnabled = false; // admin mode toggle
 
 // ===== USER CHAT =====
 
-// Open / Close chat window
+// Open chat window
 chatIcon.addEventListener('click', () => {
   chatWindow.style.display = 'flex';
   chatIcon.style.display = 'none';
+
+  // Clear notification badge
+  userChatBadge.classList.add('hidden');
+  userChatBadge.textContent = '0';
+
+  // Load all messages
+  if (userId) {
+    messagesDiv.innerHTML = '';
+    db.ref(`users/${userId}/messages`).once('value', snap => {
+      snap.forEach(child => {
+        const msg = child.val();
+        const div = document.createElement('div');
+        div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
+          (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
+        div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
+        messagesDiv.appendChild(div);
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  }
 });
-closeChatBtn.addEventListener('click', () => {
-  chatWindow.style.display = 'none';
-  chatIcon.style.display = 'flex';
-});
+
+// Close chat (optional if you have a close button)
+if(document.getElementById('closeChat')){
+  document.getElementById('closeChat').addEventListener('click', () => {
+    chatWindow.style.display = 'none';
+    chatIcon.style.display = 'flex';
+  });
+}
 
 // Start chat
 startChat.addEventListener('click', () => {
@@ -79,23 +106,65 @@ input.addEventListener('keydown', e => {
   }
 });
 
-// Listen for user messages
+// Listen for messages (user receives admin messages even when chat is closed)
+
+
 function listenUserMessages() {
   if (!userId) return;
+
   const messagesRef = db.ref(`users/${userId}/messages`);
   messagesRef.off('child_added');
+
+  // Listen for new messages
   messagesRef.on('child_added', snap => {
     const msg = snap.val();
     const div = document.createElement('div');
-    div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
-      (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
-    div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
-    messagesDiv.appendChild(div);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    let appendMessage = false;
+
+    // Check if chat is visible
+    const chatVisible = window.getComputedStyle(chatWindow).display !== 'none';
+
+    if (msg.sender === 'user') {
+      div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-blue-100 self-end';
+      div.innerHTML = `<strong>You:</strong> ${msg.text}`;
+      appendMessage = true;
+    } else if (msg.sender === 'admin') {
+      div.className = 'px-3 py-2 rounded-lg max-w-[80%] bg-gray-100 self-start';
+      div.innerHTML = `<strong>Admin:</strong> ${msg.text}`;
+
+      if (!chatVisible) {
+        // Chat is minimized → increment badge
+        let count = parseInt(userChatBadge.textContent) || 0;
+        count++;
+        userChatBadge.textContent = count;
+        userChatBadge.classList.remove('hidden');
+      } else {
+        appendMessage = true;
+      }
+    }
+
+    if (appendMessage) {
+      messagesDiv.appendChild(div);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
   });
 }
 
-// Auto-load if user already exists
+// Chat icon click → open chat and reset badge
+chatIcon.addEventListener('click', () => {
+  chatWindow.style.display = 'flex';
+  chatIcon.style.display = 'none';
+  userChatBadge.classList.add('hidden');
+  userChatBadge.textContent = '0';
+});
+
+// Close chat
+document.getElementById('closeChat')?.addEventListener('click', () => {
+  chatWindow.style.display = 'none';
+  chatIcon.style.display = 'flex';
+});
+
+// Auto-load existing user session
 if (username && userId) {
   nameContainer.style.display = 'none';
   messagesDiv.classList.remove('hidden');
@@ -103,9 +172,10 @@ if (username && userId) {
   listenUserMessages();
 }
 
+
 // ===== ADMIN PANEL =====
 
-// Toggle admin mode: Ctrl + Alt + M
+// Toggle admin mode
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'm') {
     adminEnabled = !adminEnabled;
@@ -219,11 +289,11 @@ deleteBtn.addEventListener('click', () => {
   selectedAdminUser = null;
 });
 
-// Navbar chat icon click (only works if adminEnabled)
+// Navbar chat icon click (admin only)
 navbarChatIcon.addEventListener('click', () => {
-  if (!adminEnabled) return; // do nothing if admin mode not enabled
-  adminPanel.classList.remove('hidden'); // open panel
-  navbarChatBadge.classList.add('hidden'); // clear badge
+  if (!adminEnabled) return;
+  adminPanel.classList.remove('hidden');
+  navbarChatBadge.classList.add('hidden');
   const firstUserDiv = userList.querySelector('div');
   if (firstUserDiv) firstUserDiv.click();
 });
