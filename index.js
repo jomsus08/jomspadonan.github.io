@@ -1,3 +1,37 @@
+// 1. Siguraduhin na nandito ang mga elements (sa taas ng script)
+const startChatBtn = document.getElementById('startChat');
+const nameInputEl = document.getElementById('nameInput'); // check mo kung nameInput din ID nito sa HTML
+
+// 2. ILAGAY MO ITO SA ILALIM NG "// ===== USER CHAT ACTIONS ====="
+if (startChatBtn) {
+    startChatBtn.addEventListener('click', function(e) {
+        e.preventDefault(); // Eto ang fix para ma-click at hindi mag-refresh ang page
+        
+        const typedName = nameInputEl.value.trim();
+        
+        if (typedName === "") {
+            alert("Mangyaring ilagay ang iyong pangalan!");
+            return;
+        }
+
+        // I-set ang user info
+        username = typedName;
+        userId = "user_" + Date.now(); 
+
+        localStorage.setItem('username', username);
+        localStorage.setItem('userId', userId);
+
+        // UI Update: Itago ang login, ipakita ang chat
+        if (nameContainer) nameContainer.style.display = 'none';
+        if (messagesDiv) messagesDiv.classList.remove('hidden');
+        if (inputContainer) inputContainer.classList.remove('hidden');
+
+        // Simulan ang pakikinig sa messages
+        listenUserMessages();
+        
+        console.log("Chat started for:", username);
+    });
+}
 
 
 // ===== FIREBASE CONFIG =====
@@ -699,3 +733,4 @@ window.addEventListener('resize', () => {
         window.onbeforeunload = function () {
     window.scrollTo(0, 0);
   };
+
