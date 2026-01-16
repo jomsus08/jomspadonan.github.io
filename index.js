@@ -213,9 +213,6 @@ deleteBtn.addEventListener('click', () => {
 
 
 
-
-
-
         // Mobile menu toggle (use maxHeight so it works even without slide-down CSS)
         const burger = document.getElementById('burger');
         const mobileMenu = document.getElementById('mobileMenu');
@@ -562,5 +559,4 @@ deleteBtn.addEventListener('click', () => {
         
         window.onbeforeunload = function () {
     window.scrollTo(0, 0);
-
   };
