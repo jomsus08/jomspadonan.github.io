@@ -157,28 +157,29 @@
 
     <body class="text-slate-800">
       <div id="scrollProgress"></div>
-      <nav class="fixed w-full z-40">
-        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="#home" class="text-xl font-bold text-sky-600">JomarPadonan</a>
-          <div class="hidden md:flex items-center gap-6 text-sm text-slate-700">
-            <a href="#home" class="hover:underline">Home</a>
-            <a href="#about" class="hover:underline">About</a>
-            <a href="#projects" class="hover:underline">Projects</a>
-            <a href="#contact" class="hover:underline">Contact</a>
-            <!-- navbar Resume removed -->
-          </div>
-          <button id="burger" class="md:hidden text-slate-700"><i class="fas fa-bars fa-lg"></i></button>
+     <nav class="fixed w-full z-40 bg-white shadow">
+  <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+    <a href="#home" class="text-xl font-bold text-sky-600">JomarPadonan</a>
+    <div class="hidden md:flex items-center gap-6 text-sm text-slate-700">
+      <a href="#home" class="hover:underline">Home</a>
+      <a href="#about" class="hover:underline">About</a>
+      <a href="#projects" class="hover:underline">Projects</a>
+      <div class="flex items-center">
+        <a href="#contact" class="hover:underline">Contact</a>
+        <!-- Chat Notification Icon -->
+        <div id="navbarChatIcon" class="relative cursor-pointer ml-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 3.866-3.582 7-8 7a8.969 8.969 0 01-4-1l-5 1 1-5a8.969 8.969 0 01-1-4c0-4.418 3.582-8 8-8s8 3.582 8 8z"/>
+          </svg>
+          <span id="navbarChatBadge" class="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hidden">0</span>
         </div>
-        <div id="mobileMenu" class="slide-down md:hidden px-4">
-          <ul class="space-y-2 text-slate-700">
-            <li><a href="#home" class="block py-2">Home</a></li>
-            <li><a href="#about" class="block py-2">About</a></li>
-            <li><a href="#projects" class="block py-2">Projects</a></li>
-            <li><a href="#contact" class="block py-2">Contact</a></li>
-            <!-- mobile Resume removed -->
-          </ul>
-        </div>
-      </nav>
+      </div>
+    </div>
+    <button id="burger" class="md:hidden text-slate-700"><i class="fas fa-bars fa-lg"></i></button>
+  </div>
+</nav>
+
 
       <!-- HERO -->
       <header id="home" class="pt-24 pb-12 relative overflow-hidden">
