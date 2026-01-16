@@ -7,17 +7,11 @@ const firebaseConfig = {
   storageBucket: "chat-487cc.appspot.com",
   messagingSenderId: "654241113125",
   appId: "1:654241113125:web:35da481576b9f570dc4bcc",
-  measurementId: "G-6LC7GBTQL5"
 };
-
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-
-
-
-// ========== CHAT WINDOW (USER) ==========
+// ===== ELEMENTS =====
 const chatIcon = document.getElementById('chatIcon');
 const chatWindow = document.getElementById('chat');
 const closeChatBtn = document.getElementById('closeChat');
@@ -28,16 +22,30 @@ const startChat = document.getElementById('startChat');
 const nameContainer = document.getElementById('nameContainer');
 const inputContainer = document.getElementById('inputContainer');
 
-let username = "";
-let userId = "";
+const adminPanel = document.getElementById('adminPanel');
+const closeAdmin = document.getElementById('closeAdmin');
+const userList = document.getElementById('userList');
+const adminMessages = document.getElementById('adminMessages');
+const adminInput = document.getElementById('adminInput');
+const archiveBtn = document.getElementById('archiveChat');
+const deleteBtn = document.getElementById('deleteChat');
 
-// OPEN chat
+const navbarChatBadge = document.getElementById('navbarChatBadge');
+const navbarChatIcon = document.getElementById('navbarChatIcon');
+
+// ===== STATE =====
+let username = localStorage.getItem('username') || "";
+let userId = localStorage.getItem('userId') || "";
+let selectedAdminUser = null;
+let adminEnabled = false; // admin mode toggle
+
+// ===== USER CHAT =====
+
+// Open / Close chat window
 chatIcon.addEventListener('click', () => {
   chatWindow.style.display = 'flex';
   chatIcon.style.display = 'none';
 });
-
-// MINIMIZE chat
 closeChatBtn.addEventListener('click', () => {
   chatWindow.style.display = 'none';
   chatIcon.style.display = 'flex';
@@ -47,10 +55,9 @@ closeChatBtn.addEventListener('click', () => {
 startChat.addEventListener('click', () => {
   if (!nameInput.value.trim()) return alert("Enter your name!");
   username = nameInput.value.trim();
-
-  userId = localStorage.getItem('userId') || "user_" + Date.now();
-  localStorage.setItem('userId', userId);
+  userId = userId || "user_" + Date.now();
   localStorage.setItem('username', username);
+  localStorage.setItem('userId', userId);
 
   nameContainer.style.display = 'none';
   messagesDiv.classList.remove('hidden');
@@ -62,95 +69,92 @@ startChat.addEventListener('click', () => {
 // Send user message
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter' && input.value.trim() !== '') {
-    const msg = {
+    db.ref(`users/${userId}/messages`).push({
       name: username,
       text: input.value.trim(),
       timestamp: Date.now(),
       sender: 'user'
-    };
-    db.ref('users/' + userId + '/messages').push(msg);
+    });
     input.value = '';
   }
 });
 
-// Listen to messages for this user
+// Listen for user messages
 function listenUserMessages() {
   if (!userId) return;
-  const messagesRef = db.ref('users/' + userId + '/messages');
+  const messagesRef = db.ref(`users/${userId}/messages`);
   messagesRef.off('child_added');
-
   messagesRef.on('child_added', snap => {
     const msg = snap.val();
     const div = document.createElement('div');
     div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
-                    (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
+      (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
     div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
     messagesDiv.appendChild(div);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 }
 
-// ========== ADMIN PANEL ==========
-const adminPanel = document.getElementById('adminPanel');
-const closeAdmin = document.getElementById('closeAdmin');
-const userList = document.getElementById('userList');
-const adminMessages = document.getElementById('adminMessages');
-const adminInput = document.getElementById('adminInput');
-const archiveBtn = document.getElementById('archiveChat');
-const deleteBtn = document.getElementById('deleteChat');
+// Auto-load if user already exists
+if (username && userId) {
+  nameContainer.style.display = 'none';
+  messagesDiv.classList.remove('hidden');
+  inputContainer.classList.remove('hidden');
+  listenUserMessages();
+}
 
-let selectedAdminUser = null;
+// ===== ADMIN PANEL =====
 
-// Toggle admin panel: Ctrl+Alt+M
+// Toggle admin mode: Ctrl + Alt + M
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'm') {
-    adminPanel.classList.toggle('hidden');
+    adminEnabled = !adminEnabled;
+    console.log('Admin mode:', adminEnabled ? 'ON' : 'OFF');
   }
 });
+
+// Close admin panel
 closeAdmin.addEventListener('click', () => adminPanel.classList.add('hidden'));
 
-// Real-time User List + Notification Badge
+// Real-time user list + notifications
 db.ref('users').on('value', snapshot => {
   userList.innerHTML = '<h3 class="font-semibold mb-2">Users</h3>';
+  let totalUnread = 0;
 
   snapshot.forEach(userSnap => {
     const uid = userSnap.key;
-    const messagesObj = userSnap.child('messages').val();
-    const lastRead = userSnap.child('lastReadTimestamp').val() || 0;
+    const messagesObj = userSnap.child('messages').val() || {};
+    const archived = userSnap.child('archived').val();
+    if (archived) return;
 
-    let name = 'User';
-    if (messagesObj) {
-      const firstKey = Object.keys(messagesObj)[0];
-      name = messagesObj[firstKey].name || 'User';
-    }
+    const lastRead = userSnap.child('lastReadTimestamp').val() || 0;
+    let name = Object.values(messagesObj)[0]?.name || 'User';
+    const unreadCount = Object.values(messagesObj).filter(m => m.sender === 'user' && m.timestamp > lastRead).length;
+    totalUnread += unreadCount;
 
     const div = document.createElement('div');
     div.className = 'p-2 border-b cursor-pointer hover:bg-gray-100 flex justify-between items-center';
-
     const nameSpan = document.createElement('span');
     nameSpan.textContent = name;
-
     const badge = document.createElement('span');
-    badge.className = 'bg-red-500 text-white text-xs px-1 rounded-full hidden';
-    badge.textContent = '0';
+    badge.className = 'bg-red-500 text-white text-xs px-1 rounded-full ' + (unreadCount ? '' : 'hidden');
+    badge.textContent = unreadCount;
 
     div.appendChild(nameSpan);
     div.appendChild(badge);
 
-    // Click to select user
     div.onclick = () => {
       selectUser(uid, name);
-      badge.textContent = '0';
       badge.classList.add('hidden');
-      db.ref('users/' + uid).update({ lastReadTimestamp: Date.now() });
+      db.ref(`users/${uid}`).update({ lastReadTimestamp: Date.now() });
     };
 
     userList.appendChild(div);
 
-    // Listen for new messages per user
-    db.ref('users/' + uid + '/messages').on('child_added', snap => {
+    // Update badge in real-time for each user
+    db.ref(`users/${uid}/messages`).on('child_added', snap => {
       const msg = snap.val();
-      if (msg.sender === 'user' && msg.timestamp > lastRead && selectedAdminUser !== uid) {
+      if (msg.sender === 'user' && snap.val().timestamp > lastRead && selectedAdminUser !== uid) {
         badge.classList.remove('hidden');
         let count = parseInt(badge.textContent) || 0;
         count++;
@@ -158,45 +162,51 @@ db.ref('users').on('value', snapshot => {
       }
     });
   });
+
+  // Update navbar badge
+  if (totalUnread > 0) {
+    navbarChatBadge.textContent = totalUnread;
+    navbarChatBadge.classList.remove('hidden');
+  } else {
+    navbarChatBadge.classList.add('hidden');
+  }
 });
 
-// Select user to chat
+// Admin selects a user
 function selectUser(uid, name) {
   selectedAdminUser = uid;
   adminMessages.innerHTML = '';
 
-  db.ref('users/' + uid + '/messages').off('child_added');
-  db.ref('users/' + uid + '/messages').on('child_added', snap => {
+  db.ref(`users/${uid}/messages`).off('child_added');
+  db.ref(`users/${uid}/messages`).on('child_added', snap => {
     const msg = snap.val();
     const div = document.createElement('div');
     div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
-                    (msg.sender === 'user' ? 'bg-gray-100 self-start' : 'bg-green-100 self-end');
+      (msg.sender === 'user' ? 'bg-gray-100 self-start' : 'bg-green-100 self-end');
     div.innerHTML = `<strong>${msg.sender === 'user' ? msg.name : 'Admin'}:</strong> ${msg.text}`;
     adminMessages.appendChild(div);
     adminMessages.scrollTop = adminMessages.scrollHeight;
   });
 }
 
-// Send admin reply
+// Admin sends reply
 adminInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && adminInput.value.trim() !== '' && selectedAdminUser) {
-    const msg = {
+  if (e.key === 'Enter' && adminInput.value.trim() && selectedAdminUser) {
+    db.ref(`users/${selectedAdminUser}/messages`).push({
       name: 'Admin',
       text: adminInput.value.trim(),
       timestamp: Date.now(),
       sender: 'admin'
-    };
-    db.ref('users/' + selectedAdminUser + '/messages').push(msg);
+    });
     adminInput.value = '';
   }
 });
 
-// Archive & Delete
+// Archive/Delete
 archiveBtn.addEventListener('click', () => {
   if (!selectedAdminUser) return;
   if (!confirm('Archive this chat?')) return;
-
-  db.ref('users/' + selectedAdminUser).update({ archived: true });
+  db.ref(`users/${selectedAdminUser}`).update({ archived: true });
   adminMessages.innerHTML = '';
   selectedAdminUser = null;
 });
@@ -204,10 +214,18 @@ archiveBtn.addEventListener('click', () => {
 deleteBtn.addEventListener('click', () => {
   if (!selectedAdminUser) return;
   if (!confirm('Delete this chat permanently?')) return;
-
-  db.ref('users/' + selectedAdminUser).remove();
+  db.ref(`users/${selectedAdminUser}`).remove();
   adminMessages.innerHTML = '';
   selectedAdminUser = null;
+});
+
+// Navbar chat icon click (only works if adminEnabled)
+navbarChatIcon.addEventListener('click', () => {
+  if (!adminEnabled) return; // do nothing if admin mode not enabled
+  adminPanel.classList.remove('hidden'); // open panel
+  navbarChatBadge.classList.add('hidden'); // clear badge
+  const firstUserDiv = userList.querySelector('div');
+  if (firstUserDiv) firstUserDiv.click();
 });
 
 
