@@ -1,10 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Joms Padonan</title>
+  <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <title>Jomar Padonan</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -209,8 +211,7 @@
 
             <div class="relative z-10 flex justify-center md:justify-end">
               <div class="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden profile-img shadow-lg profile-wrap">
-      <img src="images/Me-removebg-preview.png" alt="Jomar" class="w-full h-full object-cover">
-
+                <img src="../images/Me-removebg-preview.png" alt="Jomar" class="w-full h-full object-cover">
                 <!-- SVG snake border overlay -->
                 <svg class="snake-svg snake-rot" viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true">
                   <defs>
@@ -249,7 +250,7 @@
             </div>
           </div>
 
-         <div class="grid md:grid-cols-3 gap-6">
+        <div class="grid md:grid-cols-3 gap-6">
             <div class="md:col-span-2 reveal">
               <h2 class="text-3xl font-bold mb-4">About Me</h2>
               <p class="text-slate-700">Hi — I'm Jomar. I combine IT support experience with frontend development to build practical, accessible web experiences. I enjoy problem solving, automation, and crafting clean interfaces.</p>
@@ -280,7 +281,11 @@
               </div>
             </div>
 
-            <aside class="bg-white rounded-lg shadow p-6 mt-10 reveal col-offset">
+
+
+<aside class="bg-white rounded-lg shadow p-6 mt-10 reveal col-offset">
+
+
                 <h4 class="font-semibold mb-3">Contact</h4>
                 <div class="flex items-center gap-3">
                   <i class="fas fa-envelope fa-lg text-sky-600"></i>
@@ -396,7 +401,7 @@
 
             <aside class="bg-white rounded-lg shadow p-6 reveal col-offset">
               <h4 class="font-semibold mb-3">Education</h4>
-             <p class="text-sm text-slate-700">B.S.I.T — Infotech College Of Arts And Sciences (2020)</p>
+              <p class="text-sm text-slate-700">B.S.I.T — Infotech College Of Arts And Sciences (2020)</p>
 
               <div class="mt-6">
                 <h4 class="font-semibold mb-3">Skills</h4>
@@ -436,7 +441,7 @@
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <article class="project-card bg-white rounded-lg overflow-hidden reveal">
               <div class="proj-figure">
-                <img src="images/Me-removebg-preview.png"alt="project">
+                <img src="../images/Me-removebg-preview.png" alt="project">
                 <div class="proj-overlay">
                   <div class="w-full">
                     <div class="proj-tags mb-2"><span class="tech px-2 py-1 text-xs">HTML</span><span class="tech px-2 py-1 text-xs">Tailwind</span></div>
@@ -457,7 +462,7 @@
 
             <article class="project-card bg-white rounded-lg overflow-hidden reveal">
               <div class="proj-figure">
-                <img src="images/Me-removebg-preview.png" alt="project">
+                <img src="../images/Me-removebg-preview.png" alt="project">
                 <div class="proj-overlay">
                   <div class="w-full">
                     <div class="proj-tags mb-2"><span class="tech px-2 py-1 text-xs">Dashboard</span><span class="tech px-2 py-1 text-xs">JS</span></div>
@@ -478,7 +483,7 @@
 
             <article class="project-card bg-white rounded-lg overflow-hidden reveal">
               <div class="proj-figure">
-                <img src="images/Me-removebg-preview.png" alt="project">
+                <img src="../images/Me-removebg-preview.png" alt="project">
                 <div class="proj-overlay">
                   <div class="w-full">
                     <div class="proj-tags mb-2"><span class="tech px-2 py-1 text-xs">Automation</span><span class="tech px-2 py-1 text-xs">Python</span></div>
@@ -564,7 +569,305 @@
         </div>
       </div>
 
+
+
+
+
+      
+
+<!-- Minimized Chat Icon -->
+<div id="chatIcon" class="fixed bottom-5 right-5 w-16 h-16 bg-blue-500 rounded-full shadow-lg flex items-center justify-center cursor-pointer z-50">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 3.866-3.582 7-8 7a8.969 8.969 0 01-4-1l-5 1 1-5a8.969 8.969 0 01-1-4c0-4.418 3.582-8 8-8s8 3.582 8 8z"/>
+  </svg>
+</div>
+
+<!-- Tailwind + Chat -->
+<div id="chat" class="fixed bottom-5 right-5 w-80 h-[450px] bg-white border rounded-xl shadow-lg flex flex-col overflow-hidden z-50 hidden">
+
+  <!-- Header -->
+  <div class="bg-blue-500 text-white p-3 flex justify-between items-center">
+    Chat
+    <button id="closeChat">&times;</button>
+  </div>
+
+  <!-- Name input -->
+  <div id="nameContainer" class="p-3 border-b border-gray-200">
+    <input id="nameInput" type="text" placeholder="Enter your name" class="w-full px-3 py-2 border rounded-lg"/>
+    <button id="startChat" class="mt-2 w-full bg-blue-500 text-white rounded-lg">Start Chat</button>
+  </div>
+
+  <!-- Messages -->
+  <div id="messages" class="flex-1 p-3 overflow-y-auto space-y-2 hidden"></div>
+
+  <!-- Input -->
+  <div id="inputContainer" class="p-3 border-t border-gray-200 hidden">
+    <input id="input" type="text" placeholder="Type a message..." class="w-full px-3 py-2 border rounded-lg"/>
+  </div>
+</div>
+
+<!-- Admin Panel (hidden by default) -->
+<div id="adminPanel" class="fixed top-0 left-0 w-full h-full bg-gray-100 bg-opacity-90 hidden z-50 p-5 overflow-auto">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-2xl font-bold">Admin Panel</h2>
+    <button id="closeAdmin" class="text-xl font-bold">&times;</button>
+  </div>
+  <div class="flex space-x-4">
+    <div class="w-1/4 bg-white p-3 rounded shadow h-[80vh] overflow-y-auto" id="userList">
+      <h3 class="font-semibold mb-2">Users</h3>
+      <!-- List of users -->
+    </div>
+    <div class="w-3/4 bg-white p-3 rounded shadow h-[80vh] flex flex-col">
+      <div class="flex-1 overflow-y-auto space-y-2" id="adminMessages">
+        <!-- Selected user's messages -->
+      </div>
+      <div class="mt-2">
+        <input id="adminInput" type="text" placeholder="Type a reply..." class="w-full px-3 py-2 border rounded-lg"/>
+      </div>
+    </div>
+  </div>
+  <div class="flex justify-between items-center mb-2">
+  <h3 id="selectedUserName" class="font-semibold"></h3>
+  <div class="space-x-2">
+    <button id="archiveChat" title="Archive">📦</button>
+    <button id="deleteChat" title="Delete">🗑️</button>
+  </div>
+</div>
+
+</div>
+
+
+
+
+
       <script>
+
+const chatIcon = document.getElementById('chatIcon');
+const chatWindow = document.getElementById('chat');
+const closeChatBtn = document.getElementById('closeChat');
+
+// OPEN chat
+chatIcon.addEventListener('click', () => {
+  chatWindow.style.display = 'flex';
+  chatIcon.style.display = 'none';
+});
+
+// MINIMIZE chat
+closeChatBtn.addEventListener('click', () => {
+  chatWindow.style.display = 'none';
+  chatIcon.style.display = 'flex';
+});
+
+
+
+
+
+const archiveBtn = document.getElementById('archiveChat');
+const deleteBtn = document.getElementById('deleteChat');
+
+// ARCHIVE CHAT
+archiveBtn.addEventListener('click', () => {
+  if (!selectedAdminUser) return;
+  if (!confirm('Archive this chat?')) return;
+
+  db.ref('users/' + selectedAdminUser).update({
+    archived: true
+  });
+
+  adminMessages.innerHTML = '';
+  selectedAdminUser = null;
+});
+
+// DELETE CHAT
+deleteBtn.addEventListener('click', () => {
+  if (!selectedAdminUser) return;
+  if (!confirm('Delete this chat permanently?')) return;
+
+  db.ref('users/' + selectedAdminUser).remove();
+
+  adminMessages.innerHTML = '';
+  selectedAdminUser = null;
+});
+
+
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBUH4cFCq7-pjjbHZZNCdkm1m-VX04E6ik",
+  authDomain: "chat-487cc.firebaseapp.com",
+  databaseURL: "https://chat-487cc-default-rtdb.firebaseio.com",
+  projectId: "chat-487cc",
+  storageBucket: "chat-487cc.firebasestorage.app",
+  messagingSenderId: "654241113125",
+  appId: "1:654241113125:web:35da481576b9f570dc4bcc",
+  measurementId: "G-6LC7GBTQL5"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Elements
+const chat = document.getElementById('chat');
+const messagesDiv = document.getElementById('messages');
+const input = document.getElementById('input');
+const nameInput = document.getElementById('nameInput');
+const startChat = document.getElementById('startChat');
+const nameContainer = document.getElementById('nameContainer');
+const inputContainer = document.getElementById('inputContainer');
+const closeChat = document.getElementById('closeChat');
+
+const adminPanel = document.getElementById('adminPanel');
+const closeAdmin = document.getElementById('closeAdmin');
+const userList = document.getElementById('userList');
+const adminMessages = document.getElementById('adminMessages');
+const adminInput = document.getElementById('adminInput');
+
+let username = "";
+let userId = "";
+let selectedAdminUser = null;
+
+// Close chat
+closeChat.addEventListener('click', () => chat.style.display = 'none');
+
+// Load user info from localStorage
+window.addEventListener('load', () => {
+  const savedId = localStorage.getItem('userId');
+  const savedName = localStorage.getItem('username');
+
+  if (savedId && savedName) {
+    userId = savedId;
+    username = savedName;
+
+    nameContainer.style.display = 'none';
+    messagesDiv.classList.remove('hidden');
+    inputContainer.classList.remove('hidden');
+
+    listenUserMessages();
+  }
+});
+
+// Start chat
+startChat.addEventListener('click', () => {
+  if (!nameInput.value.trim()) return alert("Enter your name!");
+
+  username = nameInput.value.trim();
+
+  if (!localStorage.getItem('userId')) {
+    userId = "user_" + Date.now();
+    localStorage.setItem('userId', userId);
+  } else {
+    userId = localStorage.getItem('userId');
+  }
+  localStorage.setItem('username', username);
+
+  nameContainer.style.display = 'none';
+  messagesDiv.classList.remove('hidden');
+  inputContainer.classList.remove('hidden');
+
+  listenUserMessages();
+});
+
+// Send user message
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && input.value.trim() !== '') {
+    const msg = {
+      name: username,
+      text: input.value.trim(),
+      timestamp: Date.now(),
+      sender: 'user'
+    };
+    db.ref('users/' + userId + '/messages').push(msg);
+    input.value = '';
+  }
+});
+
+// Listen for user + admin messages in real-time
+function listenUserMessages() {
+  if (!userId) return;
+  const messagesRef = db.ref('users/' + userId + '/messages');
+  messagesRef.off('child_added');
+
+  messagesRef.on('child_added', snap => {
+    const msg = snap.val();
+
+    const div = document.createElement('div');
+    div.id = snap.key;
+    div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
+                    (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
+    div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
+    messagesDiv.appendChild(div);
+
+    // Auto scroll
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+}
+
+// Admin Panel toggle: Ctrl + Alt + M
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'm') {
+    adminPanel.classList.toggle('hidden');
+  }
+});
+
+// Close admin panel
+closeAdmin.addEventListener('click', () => adminPanel.classList.add('hidden'));
+
+// Real-time User List for admin
+db.ref('users').on('value', snapshot => {
+  userList.innerHTML = '<h3 class="font-semibold mb-2">Users</h3>';
+  snapshot.forEach(userSnap => {
+    const uid = userSnap.key;
+    const firstMsgObj = userSnap.child('messages').val();
+    let name = 'User';
+    if (firstMsgObj) {
+      const firstKey = Object.keys(firstMsgObj)[0];
+      name = firstMsgObj[firstKey].name || 'User';
+    }
+    const div = document.createElement('div');
+    div.className = 'p-2 border-b cursor-pointer hover:bg-gray-100';
+    div.textContent = name;
+    div.onclick = () => selectUser(uid, name);
+    userList.appendChild(div);
+  });
+});
+
+// Admin selects a user to chat with
+function selectUser(uid, name) {
+  selectedAdminUser = uid;
+  adminMessages.innerHTML = '';
+
+  db.ref('users/' + uid + '/messages').off('child_added');
+
+  db.ref('users/' + uid + '/messages').on('child_added', snap => {
+    const msg = snap.val();
+    const div = document.createElement('div');
+    div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
+                    (msg.sender === 'user' ? 'bg-gray-100 self-start' : 'bg-green-100 self-end');
+    div.innerHTML = `<strong>${msg.sender === 'user' ? msg.name : 'Admin'}:</strong> ${msg.text}`;
+    adminMessages.appendChild(div);
+    adminMessages.scrollTop = adminMessages.scrollHeight;
+  });
+}
+
+// Admin sends reply
+adminInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && adminInput.value.trim() !== '' && selectedAdminUser) {
+    const msg = {
+      name: 'Admin',
+      text: adminInput.value.trim(),
+      timestamp: Date.now(),
+      sender: 'admin'
+    };
+    db.ref('users/' + selectedAdminUser + '/messages').push(msg);
+    adminInput.value = '';
+  }
+});
+
+
+
+
+
         // Mobile menu toggle (use maxHeight so it works even without slide-down CSS)
         const burger = document.getElementById('burger');
         const mobileMenu = document.getElementById('mobileMenu');
@@ -908,6 +1211,7 @@
         });
         if(copyEmailBtn) copyEmailBtn.addEventListener('click', ()=>{ navigator.clipboard?.writeText(emailAddress).then(()=>{ copyEmailBtn.textContent = 'Copied'; setTimeout(()=> copyEmailBtn.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy',1200); }).catch(()=> alert('Copy failed — select and copy manually')); });
 
+        
         window.onbeforeunload = function () {
     window.scrollTo(0, 0);
   };
@@ -915,9 +1219,3 @@
     </body>
   </html>
   </div>
-
-
-
-
-
-
