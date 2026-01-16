@@ -75,48 +75,49 @@ function resetBadge() {
   }
 }
 
-// ===== LISTEN FOR MESSAGES =====
 function listenUserMessages() {
   if (!userId) return;
 
   const messagesRef = db.ref(`users/${userId}/messages`);
-  messagesRef.off('child_added');
+  
+  // Gamitin ang .on('value') sa halip na child_added para sa real-time SEEN update
+  messagesRef.on('value', snapshot => {
+    const isChatOpen = chatWindow.style.display === 'flex' || !chatWindow.classList.contains('hidden');
 
-  // STEP 1: Kunin ang tamang count base sa unread messages sa DB (Para iwas multiply sa refresh)
-  messagesRef.once('value', snapshot => {
-    let count = 0;
-    snapshot.forEach(child => {
-      const m = child.val();
-      if (m.sender === 'admin' && m.isRead !== true) {
-        count++;
-      }
-    });
-    userBadge = count;
-    updateBadgeUI();
-    isInitialLoad = false; // Tapos na ang initial counting
-  });
+    if (isChatOpen) {
+      // 1. Linisin ang messages div para sa fresh render
+      messagesDiv.innerHTML = '';
+      
+      let unreadFromAdmin = 0;
 
-  // STEP 2: Makinig sa mga DARATING na bagong messages
-  messagesRef.on('child_added', snap => {
-    const msg = snap.val();
-    const chatVisible = chatWindow.style.display === 'flex';
+      snapshot.forEach(child => {
+        const msg = child.val();
+        renderMessage(msg); // I-render ang message (lalabas dito ang updated Sent/Seen)
 
-    if (msg.sender === 'user') {
-      if (chatVisible) renderMessage(msg);
-    } else if (msg.sender === 'admin') {
-      if (!chatVisible) {
-        // Mag-increment lang kung TAPOS na ang initial load (real-time message)
-        if (!isInitialLoad && msg.isRead !== true) {
-          incrementBadge();
+        if (msg.sender === 'admin' && !msg.isRead) {
+          unreadFromAdmin++;
         }
-      } else {
-        // Mark as read agad kung nakabukas ang chat
-        snap.ref.update({ isRead: true });
-        renderMessage(msg);
+      });
+
+      // 2. Kung may unread galing kay admin habang nakabukas ang chat, mark as read agad
+      if (unreadFromAdmin > 0) {
+        resetBadge(); // Ito ang mag-uupdate sa DB para maging 'Seen' din sa side ni Admin
       }
+
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    } else {
+      // 3. Kung sarado ang chat, bilangin lang ang unread para sa badge UI
+      let count = 0;
+      snapshot.forEach(child => {
+        const m = child.val();
+        if (m.sender === 'admin' && !m.isRead) count++;
+      });
+      userBadge = count;
+      updateBadgeUI();
     }
   });
 }
+
 
 // 1. START CHAT BUTTON (Dito papasok ang bagong user)
 startChat.addEventListener('click', () => {
@@ -284,7 +285,6 @@ if (username && userId) {
 
 
 
-
 // ===== ADMIN PANEL =====
 
 // Toggle admin mode
@@ -300,7 +300,7 @@ closeAdmin.addEventListener('click', () => adminPanel.classList.add('hidden'));
 
 // Real-time user list + notifications
 db.ref('users').on('value', snapshot => {
-  userList.innerHTML = '<h3 class="font-semibold mb-2">Users</h3>';
+  userList.innerHTML = '<h3 class="font-bold text-lg p-3 border-b bg-gray-50">Active Chats</h3>';
   let totalUnread = 0;
 
   snapshot.forEach(userSnap => {
@@ -310,16 +310,25 @@ db.ref('users').on('value', snapshot => {
     if (archived) return;
 
     const lastRead = userSnap.child('lastReadTimestamp').val() || 0;
-    let name = Object.values(messagesObj)[0]?.name || 'User';
-    const unreadCount = Object.values(messagesObj).filter(m => m.sender === 'user' && m.timestamp > lastRead).length;
+    
+    // FIX: Hanapin ang pangalan ng user (hindi yung "Admin")
+    const msgList = Object.values(messagesObj);
+    const userMsg = msgList.find(m => m.sender === 'user');
+    let name = userMsg ? userMsg.name : 'User';
+    
+    const unreadCount = msgList.filter(m => m.sender === 'user' && m.timestamp > lastRead).length;
     totalUnread += unreadCount;
 
     const div = document.createElement('div');
-    div.className = 'p-2 border-b cursor-pointer hover:bg-gray-100 flex justify-between items-center';
+    // Pinagandang style ng list item
+    div.className = `p-3 border-b cursor-pointer transition-colors hover:bg-blue-50 flex justify-between items-center ${selectedAdminUser === uid ? 'bg-blue-100 border-r-4 border-blue-500' : 'bg-white'}`;
+    
     const nameSpan = document.createElement('span');
+    nameSpan.className = 'font-medium text-gray-700';
     nameSpan.textContent = name;
+    
     const badge = document.createElement('span');
-    badge.className = 'bg-red-500 text-white text-xs px-1 rounded-full ' + (unreadCount ? '' : 'hidden');
+    badge.className = 'bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full ' + (unreadCount ? '' : 'hidden');
     badge.textContent = unreadCount;
 
     div.appendChild(nameSpan);
@@ -332,20 +341,8 @@ db.ref('users').on('value', snapshot => {
     };
 
     userList.appendChild(div);
-
-    // Update badge in real-time for each user
-    db.ref(`users/${uid}/messages`).on('child_added', snap => {
-      const msg = snap.val();
-      if (msg.sender === 'user' && snap.val().timestamp > lastRead && selectedAdminUser !== uid) {
-        badge.classList.remove('hidden');
-        let count = parseInt(badge.textContent) || 0;
-        count++;
-        badge.textContent = count;
-      }
-    });
   });
 
-  // Update navbar badge
   if (totalUnread > 0) {
     navbarChatBadge.textContent = totalUnread;
     navbarChatBadge.classList.remove('hidden');
@@ -359,14 +356,40 @@ function selectUser(uid, name) {
   selectedAdminUser = uid;
   adminMessages.innerHTML = '';
 
-  db.ref(`users/${uid}/messages`).off('child_added');
-  db.ref(`users/${uid}/messages`).on('child_added', snap => {
-    const msg = snap.val();
-    const div = document.createElement('div');
-    div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
-      (msg.sender === 'user' ? 'bg-gray-100 self-start' : 'bg-green-100 self-end');
-    div.innerHTML = `<strong>${msg.sender === 'user' ? msg.name : 'Admin'}:</strong> ${msg.text}`;
-    adminMessages.appendChild(div);
+  const messagesRef = db.ref(`users/${uid}/messages`);
+  messagesRef.off('child_added');
+
+  // Mark user messages as read (Para sa Admin side)
+  messagesRef.once('value', snap => {
+    snap.forEach(child => {
+      if (child.val().sender === 'user' && !child.val().isRead) {
+        child.ref.update({ isRead: true });
+      }
+    });
+  });
+
+  // Gamitin ang .on('value') para mag-update ang "Seen" status ng replies mo real-time
+  messagesRef.on('value', snap => {
+    adminMessages.innerHTML = '';
+    snap.forEach(child => {
+      const msg = child.val();
+      const isFromUser = msg.sender === 'user';
+      
+      const div = document.createElement('div');
+      // Mas magandang bubble style
+      div.className = `flex flex-col mb-3 ${isFromUser ? 'items-start' : 'items-end'}`;
+
+      const bubbleColor = isFromUser ? 'bg-gray-200 text-gray-800' : 'bg-green-600 text-white shadow-sm';
+      const statusText = !isFromUser ? (msg.isRead ? "Seen" : "Sent") : "";
+
+      div.innerHTML = `
+        <div class="px-3 py-2 rounded-2xl max-w-[85%] text-sm ${bubbleColor} ${isFromUser ? 'rounded-tl-none' : 'rounded-tr-none'}">
+          <strong>${isFromUser ? name : 'Admin'}:</strong> ${msg.text}
+        </div>
+        <span class="text-[9px] text-gray-400 mt-1 px-1">${statusText}</span>
+      `;
+      adminMessages.appendChild(div);
+    });
     adminMessages.scrollTop = adminMessages.scrollHeight;
   });
 }
@@ -378,28 +401,30 @@ adminInput.addEventListener('keydown', e => {
       name: 'Admin',
       text: adminInput.value.trim(),
       timestamp: Date.now(),
-      sender: 'admin'
+      sender: 'admin',
+      isRead: false // Para sa "Seen" logic
     });
     adminInput.value = '';
   }
 });
 
-// Archive/Delete
+// Archive/Delete remains the same...
 archiveBtn.addEventListener('click', () => {
-  if (!selectedAdminUser) return;
-  if (!confirm('Archive this chat?')) return;
-  db.ref(`users/${selectedAdminUser}`).update({ archived: true });
-  adminMessages.innerHTML = '';
-  selectedAdminUser = null;
+  if (selectedAdminUser && confirm('Archive this chat?')) {
+    db.ref(`users/${selectedAdminUser}`).update({ archived: true });
+    adminMessages.innerHTML = '';
+    selectedAdminUser = null;
+  }
 });
 
 deleteBtn.addEventListener('click', () => {
-  if (!selectedAdminUser) return;
-  if (!confirm('Delete this chat permanently?')) return;
-  db.ref(`users/${selectedAdminUser}`).remove();
-  adminMessages.innerHTML = '';
-  selectedAdminUser = null;
+  if (selectedAdminUser && confirm('Delete permanently?')) {
+    db.ref(`users/${selectedAdminUser}`).remove();
+    adminMessages.innerHTML = '';
+    selectedAdminUser = null;
+  }
 });
+
 
 // Navbar chat icon click (admin only)
 navbarChatIcon.addEventListener('click', () => {
