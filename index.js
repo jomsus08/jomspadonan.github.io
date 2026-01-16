@@ -231,41 +231,44 @@ navbarChatIcon.addEventListener('click', () => {
 
 
 
-        // Mobile menu toggle (use maxHeight so it works even without slide-down CSS)
-        const burger = document.getElementById('burger');
-        const mobileMenu = document.getElementById('mobileMenu');
-        if (mobileMenu) {
-          mobileMenu.style.overflow = 'hidden';
-          mobileMenu.style.maxHeight = '0';
-        }
-        if (burger) {
-          const openIcon = '<i class="fas fa-bars fa-lg"></i>';
-          const closeIcon = '<i class="fas fa-times fa-lg"></i>';
-          burger.innerHTML = openIcon;
-          burger.addEventListener('click', () => {
-            if (!mobileMenu) return;
-            const isOpen = mobileMenu.style.maxHeight && mobileMenu.style.maxHeight !== '0px';
-            if (isOpen) {
-              mobileMenu.style.maxHeight = '0';
-              burger.innerHTML = openIcon;
-              mobileMenu.setAttribute('aria-hidden', 'true');
-            } else {
-              mobileMenu.style.maxHeight = mobileMenu.scrollHeight + 'px';
-              burger.innerHTML = closeIcon;
-              mobileMenu.setAttribute('aria-hidden', 'false');
-            }
-          });
-          window.addEventListener('resize', ()=>{
-            if (window.innerWidth >= 768) {
-              mobileMenu.style.maxHeight = null;
-              burger.innerHTML = openIcon;
-              mobileMenu.setAttribute('aria-hidden', 'false');
-            } else {
-              mobileMenu.style.maxHeight = '0';
-              mobileMenu.setAttribute('aria-hidden', 'true');
-            }
-          });
-        }
+       const burger = document.getElementById('burger');
+const mobileMenu = document.getElementById('mobileMenu');
+const openIcon = '<i class="fas fa-bars fa-lg"></i>';
+const closeIcon = '<i class="fas fa-times fa-lg"></i>';
+
+// Initialize burger icon
+burger.innerHTML = openIcon;
+
+// Toggle menu
+burger.addEventListener('click', () => {
+  const isOpen = mobileMenu.style.maxHeight && mobileMenu.style.maxHeight !== '0px';
+  if (isOpen) {
+    mobileMenu.style.maxHeight = '0';
+    burger.innerHTML = openIcon;
+  } else {
+    mobileMenu.style.maxHeight = mobileMenu.scrollHeight + 'px';
+    burger.innerHTML = closeIcon;
+  }
+});
+
+// Close menu when clicking any link inside mobile menu
+mobileMenu.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => {
+    mobileMenu.style.maxHeight = '0';
+    burger.innerHTML = openIcon;
+  });
+});
+
+// Reset menu on window resize
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 768) {
+    mobileMenu.style.maxHeight = null; // show desktop menu
+    burger.innerHTML = openIcon;
+  } else {
+    mobileMenu.style.maxHeight = '0'; // hide mobile menu by default
+  }
+});
+
 
         // Smooth scroll anchor behavior
         document.querySelectorAll('a[href^="#"]').forEach(a=>{ a.addEventListener('click', e=>{ const href=a.getAttribute('href'); if(href.length>1 && document.querySelector(href)){ e.preventDefault(); document.querySelector(href).scrollIntoView({behavior:'smooth',block:'start'}); if(mobileMenu) mobileMenu.style.maxHeight = '0'; } }); });
