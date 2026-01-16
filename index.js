@@ -1,6 +1,35 @@
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBUH4cFCq7-pjjbHZZNCdkm1m-VX04E6ik",
+  authDomain: "chat-487cc.firebaseapp.com",
+  databaseURL: "https://chat-487cc-default-rtdb.firebaseio.com",
+  projectId: "chat-487cc",
+  storageBucket: "chat-487cc.appspot.com",
+  messagingSenderId: "654241113125",
+  appId: "1:654241113125:web:35da481576b9f570dc4bcc",
+  measurementId: "G-6LC7GBTQL5"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+
+
+
+// ========== CHAT WINDOW (USER) ==========
 const chatIcon = document.getElementById('chatIcon');
 const chatWindow = document.getElementById('chat');
 const closeChatBtn = document.getElementById('closeChat');
+const messagesDiv = document.getElementById('messages');
+const input = document.getElementById('input');
+const nameInput = document.getElementById('nameInput');
+const startChat = document.getElementById('startChat');
+const nameContainer = document.getElementById('nameContainer');
+const inputContainer = document.getElementById('inputContainer');
+
+let username = "";
+let userId = "";
 
 // OPEN chat
 chatIcon.addEventListener('click', () => {
@@ -14,107 +43,13 @@ closeChatBtn.addEventListener('click', () => {
   chatIcon.style.display = 'flex';
 });
 
-
-
-
-
-const archiveBtn = document.getElementById('archiveChat');
-const deleteBtn = document.getElementById('deleteChat');
-
-// ARCHIVE CHAT
-archiveBtn.addEventListener('click', () => {
-  if (!selectedAdminUser) return;
-  if (!confirm('Archive this chat?')) return;
-
-  db.ref('users/' + selectedAdminUser).update({
-    archived: true
-  });
-
-  adminMessages.innerHTML = '';
-  selectedAdminUser = null;
-});
-
-// DELETE CHAT
-deleteBtn.addEventListener('click', () => {
-  if (!selectedAdminUser) return;
-  if (!confirm('Delete this chat permanently?')) return;
-
-  db.ref('users/' + selectedAdminUser).remove();
-
-  adminMessages.innerHTML = '';
-  selectedAdminUser = null;
-});
-
-
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyBUH4cFCq7-pjjbHZZNCdkm1m-VX04E6ik",
-  authDomain: "chat-487cc.firebaseapp.com",
-  databaseURL: "https://chat-487cc-default-rtdb.firebaseio.com",
-  projectId: "chat-487cc",
-  storageBucket: "chat-487cc.firebasestorage.app",
-  messagingSenderId: "654241113125",
-  appId: "1:654241113125:web:35da481576b9f570dc4bcc",
-  measurementId: "G-6LC7GBTQL5"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// Elements
-const chat = document.getElementById('chat');
-const messagesDiv = document.getElementById('messages');
-const input = document.getElementById('input');
-const nameInput = document.getElementById('nameInput');
-const startChat = document.getElementById('startChat');
-const nameContainer = document.getElementById('nameContainer');
-const inputContainer = document.getElementById('inputContainer');
-const closeChat = document.getElementById('closeChat');
-
-const adminPanel = document.getElementById('adminPanel');
-const closeAdmin = document.getElementById('closeAdmin');
-const userList = document.getElementById('userList');
-const adminMessages = document.getElementById('adminMessages');
-const adminInput = document.getElementById('adminInput');
-
-let username = "";
-let userId = "";
-let selectedAdminUser = null;
-
-// Close chat
-closeChat.addEventListener('click', () => chat.style.display = 'none');
-
-// Load user info from localStorage
-window.addEventListener('load', () => {
-  const savedId = localStorage.getItem('userId');
-  const savedName = localStorage.getItem('username');
-
-  if (savedId && savedName) {
-    userId = savedId;
-    username = savedName;
-
-    nameContainer.style.display = 'none';
-    messagesDiv.classList.remove('hidden');
-    inputContainer.classList.remove('hidden');
-
-    listenUserMessages();
-  }
-});
-
 // Start chat
 startChat.addEventListener('click', () => {
   if (!nameInput.value.trim()) return alert("Enter your name!");
-
   username = nameInput.value.trim();
 
-  if (!localStorage.getItem('userId')) {
-    userId = "user_" + Date.now();
-    localStorage.setItem('userId', userId);
-  } else {
-    userId = localStorage.getItem('userId');
-  }
+  userId = localStorage.getItem('userId') || "user_" + Date.now();
+  localStorage.setItem('userId', userId);
   localStorage.setItem('username', username);
 
   nameContainer.style.display = 'none';
@@ -138,7 +73,7 @@ input.addEventListener('keydown', e => {
   }
 });
 
-// Listen for user + admin messages in real-time
+// Listen to messages for this user
 function listenUserMessages() {
   if (!userId) return;
   const messagesRef = db.ref('users/' + userId + '/messages');
@@ -146,55 +81,91 @@ function listenUserMessages() {
 
   messagesRef.on('child_added', snap => {
     const msg = snap.val();
-
     const div = document.createElement('div');
-    div.id = snap.key;
     div.className = 'px-3 py-2 rounded-lg max-w-[80%] ' +
                     (msg.sender === 'user' ? 'bg-blue-100 self-end' : 'bg-gray-100 self-start');
     div.innerHTML = `<strong>${msg.sender === 'user' ? 'You' : 'Admin'}:</strong> ${msg.text}`;
     messagesDiv.appendChild(div);
-
-    // Auto scroll
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
   });
 }
 
-// Admin Panel toggle: Ctrl + Alt + M
+// ========== ADMIN PANEL ==========
+const adminPanel = document.getElementById('adminPanel');
+const closeAdmin = document.getElementById('closeAdmin');
+const userList = document.getElementById('userList');
+const adminMessages = document.getElementById('adminMessages');
+const adminInput = document.getElementById('adminInput');
+const archiveBtn = document.getElementById('archiveChat');
+const deleteBtn = document.getElementById('deleteChat');
+
+let selectedAdminUser = null;
+
+// Toggle admin panel: Ctrl+Alt+M
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.altKey && e.key.toLowerCase() === 'm') {
     adminPanel.classList.toggle('hidden');
   }
 });
-
-// Close admin panel
 closeAdmin.addEventListener('click', () => adminPanel.classList.add('hidden'));
 
-// Real-time User List for admin
+// Real-time User List + Notification Badge
 db.ref('users').on('value', snapshot => {
   userList.innerHTML = '<h3 class="font-semibold mb-2">Users</h3>';
+
   snapshot.forEach(userSnap => {
     const uid = userSnap.key;
-    const firstMsgObj = userSnap.child('messages').val();
+    const messagesObj = userSnap.child('messages').val();
+    const lastRead = userSnap.child('lastReadTimestamp').val() || 0;
+
     let name = 'User';
-    if (firstMsgObj) {
-      const firstKey = Object.keys(firstMsgObj)[0];
-      name = firstMsgObj[firstKey].name || 'User';
+    if (messagesObj) {
+      const firstKey = Object.keys(messagesObj)[0];
+      name = messagesObj[firstKey].name || 'User';
     }
+
     const div = document.createElement('div');
-    div.className = 'p-2 border-b cursor-pointer hover:bg-gray-100';
-    div.textContent = name;
-    div.onclick = () => selectUser(uid, name);
+    div.className = 'p-2 border-b cursor-pointer hover:bg-gray-100 flex justify-between items-center';
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = name;
+
+    const badge = document.createElement('span');
+    badge.className = 'bg-red-500 text-white text-xs px-1 rounded-full hidden';
+    badge.textContent = '0';
+
+    div.appendChild(nameSpan);
+    div.appendChild(badge);
+
+    // Click to select user
+    div.onclick = () => {
+      selectUser(uid, name);
+      badge.textContent = '0';
+      badge.classList.add('hidden');
+      db.ref('users/' + uid).update({ lastReadTimestamp: Date.now() });
+    };
+
     userList.appendChild(div);
+
+    // Listen for new messages per user
+    db.ref('users/' + uid + '/messages').on('child_added', snap => {
+      const msg = snap.val();
+      if (msg.sender === 'user' && msg.timestamp > lastRead && selectedAdminUser !== uid) {
+        badge.classList.remove('hidden');
+        let count = parseInt(badge.textContent) || 0;
+        count++;
+        badge.textContent = count;
+      }
+    });
   });
 });
 
-// Admin selects a user to chat with
+// Select user to chat
 function selectUser(uid, name) {
   selectedAdminUser = uid;
   adminMessages.innerHTML = '';
 
   db.ref('users/' + uid + '/messages').off('child_added');
-
   db.ref('users/' + uid + '/messages').on('child_added', snap => {
     const msg = snap.val();
     const div = document.createElement('div');
@@ -206,7 +177,7 @@ function selectUser(uid, name) {
   });
 }
 
-// Admin sends reply
+// Send admin reply
 adminInput.addEventListener('keydown', e => {
   if (e.key === 'Enter' && adminInput.value.trim() !== '' && selectedAdminUser) {
     const msg = {
@@ -219,6 +190,27 @@ adminInput.addEventListener('keydown', e => {
     adminInput.value = '';
   }
 });
+
+// Archive & Delete
+archiveBtn.addEventListener('click', () => {
+  if (!selectedAdminUser) return;
+  if (!confirm('Archive this chat?')) return;
+
+  db.ref('users/' + selectedAdminUser).update({ archived: true });
+  adminMessages.innerHTML = '';
+  selectedAdminUser = null;
+});
+
+deleteBtn.addEventListener('click', () => {
+  if (!selectedAdminUser) return;
+  if (!confirm('Delete this chat permanently?')) return;
+
+  db.ref('users/' + selectedAdminUser).remove();
+  adminMessages.innerHTML = '';
+  selectedAdminUser = null;
+});
+
+
 
 
 
@@ -570,4 +562,5 @@ adminInput.addEventListener('keydown', e => {
         
         window.onbeforeunload = function () {
     window.scrollTo(0, 0);
+
   };
